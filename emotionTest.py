@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import argparse
 import cv2
@@ -8,6 +10,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
+import matplotlib.pyplot as plt
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # command line argument
@@ -108,7 +111,7 @@ elif mode == "display":
 
     # dictionary which assigns each label an emotion (alphabetical order)
     emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
-
+    emotion_history = list()
     # start the webcam feed
     cap = cv2.VideoCapture(0)
     while True:
@@ -125,12 +128,28 @@ elif mode == "display":
             roi_gray = gray[y:y + h, x:x + w]
             cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
             prediction = model.predict(cropped_img)
-            maxindex = int(np.argmax(prediction))
-            cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
+            maxindex = int(np.argmax(prediction))
+            # turn prediction into a list
+            happy = str(prediction[0][3])
+            if maxindex == 3:
+                emotion_history.append(time.time())
+            cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            # put text below the rectangle for prediction[3]
+            cv2.putText(frame, happy, (x + 20, y + h + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
         cv2.imshow('Video', cv2.resize(frame,(1600,960),interpolation = cv2.INTER_CUBIC))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+    # with matplot lib, graph time on the x axis spanning from min emotion to max emtion, vertical lines if there is a time where maxindex is 3
+
+    # point scatter points when maxindex is 3
+    for i in emotion_history:
+        plt.scatter(i, 3)
+    plt.show()
+
+
+
     cap.release()
     cv2.destroyAllWindows()
+
