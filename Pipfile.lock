@@ -1748,24 +1748,9 @@
             "version": "==0.7.2"
         },
         "tensorflow": {
-            "file": "https://storage.googleapis.com/tensorflow/versions/2.18.0/tensorflow-2.18.0-cp312-cp312-macosx_12_0_arm64.whl",
+            "file": "https://storage.googleapis.com/tensorflow/versions/2.18.0/tensorflow_cpu-2.18.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
             "hashes": [
-                "sha256:1eb77fae50d699442726d1b23c7512c97cd688cc7d857b028683d4535bbf3709",
-                "sha256:336cace378c129c20fee6292f6a541165073d153a9a4c9cf4f14478a81895776",
-                "sha256:453cb60638a02fd26316fb36c8cbcf1569d33671f17c658ca0cf2b4626f851e7",
-                "sha256:46f5a8b4e6273f488dc069fc3ac2211b23acd3d0437d919349c787fa341baa8a",
-                "sha256:4822904b3559d8a9c25f0fe5fef191cfc1352ceca42ca64f2a7bc7ae0ff4a1f5",
-                "sha256:589342fb9bdcab2e9af0f946da4ca97757677e297d934fcdc087e87db99d6353",
-                "sha256:6e8b0f499ef0b7652480a58e358a73844932047f21c42c56f7f3bdcaf0803edc",
-                "sha256:70b8dd70fa3600bfce66ab529eebb804e1f9d7c863d2f71bc8fe9fc7a1ec3976",
-                "sha256:85f1e7369af6d329b117b52e86093cd1e0458dd5404bf5b665853f873dd00b48",
-                "sha256:8da90a9388a1f6dd00d626590d2b5810faffbb3e7367f9783d80efff882340ee",
-                "sha256:a701c2d3dca5f2efcab315b2c217f140ebd3da80410744e87d77016b3aaf53cb",
-                "sha256:ada1f7290c75b34748ee7378c1b77927e4044c94b8dc72dc75e7667c4fdaeb94",
-                "sha256:bcfd32134de8f95515b2d0ced89cdae15484b787d3a21893e9291def06c10c4e",
-                "sha256:bfdd65ea7e064064283dd78d529dd621257ee617218f63681935fd15817c6286",
-                "sha256:ec4133a215c59314e929e7cbe914579d3afbc7874d9fa924873ee633fe4f71d0",
-                "sha256:f8c946df1cb384504578fac1c199a95322373b8e04abd88aa8ae01301df469ea"
+                "sha256:39bd421ad125e4163d6e2d41ab0e158b583fb5c6f9254522fb87635b0e70b891"
             ],
             "markers": "python_version >= '3.9'"
         },
