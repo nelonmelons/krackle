@@ -258,7 +258,7 @@ async def webcam_data(sid, data):
             entry for entry in lobby['players'][player_number]['emotion_history']
             if (time.time() - lobby['round_start_time'] - entry[0]) <= 4
         ]
-        print(lobby['players'][player_number]['emotion_history'])
+        
         image = Image.open(BytesIO(image_data))
         # Convert to OpenCV format
         image_np = np.array(image)
@@ -275,7 +275,7 @@ async def webcam_data(sid, data):
                 message = 'roundLost'
         
     except:
-        print('no image detected')
+        pass
 
     await sio.emit('webcam_response', {'message': message}, to=sid)
 
