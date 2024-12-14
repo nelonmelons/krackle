@@ -160,7 +160,7 @@ async def createGame(sid, gameData):
         'round_start_time': None
     }
     lobby = lobbies[gameId]
-    player = {'id': sid, 'name': gameData['adminName'], 'emotion_history': [(0, (None, []))]}
+    player = {'id': sid, 'name': gameData['adminName'], 'emotion_history': [(0, 0)]}
     lobby['players'].append(player)
     # Admin joins the lobby room
     await sio.enter_room(sid, gameId)
@@ -183,7 +183,7 @@ async def joinLobby(sid, data):
     if lobby:
         if len(lobby['players']) < lobby['settings']['maxPlayers']:
             if not lobby['round_start_time']:
-                player = {'id': sid, 'name': playerName, 'emotion_history': [(0, (None, []))]}
+                player = {'id': sid, 'name': playerName, 'emotion_history': [(0, 0)]}
                 lobby['players'].append(player)
 
                 players_names = [player['name'] for player in lobby['players']]
@@ -254,10 +254,37 @@ async def webcam_data(sid, data):
     message = None
 
     try:
+        lobby['players'][player_number]['emotion_history'] = [
+            entry for entry in lobby['players'][player_number]['emotion_history']
+            if (time.time() - lobby['round_start_time'] - entry[0]) <= 4
+        ]
         print(lobby['players'][player_number]['emotion_history'])
         image = Image.open(BytesIO(image_data))
         # Convert to OpenCV format
         image_np = np.array(image)
+
+        emotions = predict_emotion(image_np)
+
+        if emotions != []:
+            pred = 0 
+            if emotions[0][3] + emotions[0][6] > 0.8:
+                pred = 1
+            history_append = (time.time() - lobby['round_start_time'], pred)
+            lobby['players'][player_number]['emotion_history'].append(history_append)
+            if sum(item[1] for item in lobby['players'][player_number]['emotion_history']) / len(lobby['players'][player_number]['emotion_history']) > 0.3:
+                message = 'roundLost'
+        
+    except:
+        print('no image detected')
+
+    await sio.emit('webcam_response', {'message': message}, to=sid)
+
+
+# Run the FastAPI app
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="127.0.0.1", port=8000)  # Running on port 8000, as port 3000 is taken by npm start
+
+
         # lobby['players'][player_number]['emotion_history'] = [
         #         entry for entry in lobby['players'][player_number]['emotion_history']
         #         if (time.time() - lobby['round_start_time'] - entry[0]) <= 6
@@ -275,15 +302,3 @@ async def webcam_data(sid, data):
         #     history_append = (time.time() - lobby['round_start_time'], (None, []))
         #     print('still no face detected')     
         # lobby['players'][player_number]['emotion_history'].append(history_append)
-        preds = predict_emotion(image_np)
-        print(preds)
-        
-    except:
-        print('no image detected')
-
-    await sio.emit('webcam_response', {'message': message}, to=sid)
-
-
-# Run the FastAPI app
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="127.0.0.1", port=8000)  # Running on port 8000, as port 3000 is taken by npm start

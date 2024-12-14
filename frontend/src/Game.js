@@ -144,7 +144,7 @@ const Game = () => {
         startWebcam();
 
         // Capture frames every second
-        const intervalId = setInterval(captureAndSendFrame, 1000);
+        const intervalId = setInterval(captureAndSendFrame, 125);
 
 
         socket.on('webcam_response', (message) => {
