@@ -97,6 +97,9 @@ def predict_from_face(face: np.ndarray) -> Literal["Angry", "Disgusted", "Fearfu
     prediction = model.predict(face, verbose=0)
     maxindex = int(np.argmax(prediction))
     return emotion_dict[maxindex]
+
+
+
 if __name__ == '__main__':
     # if the model results the client is happy or surprised in the last n seconds for 1/2 of the time, then the client loses
 

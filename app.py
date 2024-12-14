@@ -1,3 +1,5 @@
+import os 
+
 import socketio
 import secrets
 from fastapi import FastAPI
@@ -7,12 +9,107 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 import time
-# import uvicorn
 
 # from test import get_eigenFace_mse
-from newBackend.emotionTest import predict_emotion
 
-# Load nvironment variables from .env file
+
+import time
+from typing import Literal
+
+import numpy as np
+import argparse
+import cv2
+from keras_core.models import Sequential
+from keras_core.layers import Dense, Dropout, Flatten
+from keras_core.layers import Conv2D, MaxPooling2D
+
+# import matplotlib.pyplot as plt
+# Suppress unnecessary logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# Define Colors for CLI output
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RESET = '\033[0m'
+
+# Command-line arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("--mode", help="train/display")
+a = ap.parse_args()
+mode = a.mode
+
+# Create the model
+model = Sequential()
+
+# Add layers
+model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(48, 48, 1)))
+model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+model.add(Flatten())
+model.add(Dense(1024, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(7, activation='softmax'))
+
+# Disable OpenCL to avoid unnecessary logs
+cv2.ocl.setUseOpenCL(False)
+
+# Emotion dictionary and history
+emotion_dict: dict[int, str] = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+emotion_history: list[float] = []
+
+# Frame rate for webcam
+frame_rate: int | float = 5
+
+# Load pre-trained weights
+model.load_weights('newBackend/model.h5')
+
+# Function to predict emotion
+def predict_emotion(frame: np.ndarray) -> list:
+    """
+    Predicts the emotion from a given frame.
+
+    :param frame: The input frame from the webcam.
+    :type frame: np.ndarray
+    :return: A list of predictions for each detected face in the frame.
+    :rtype: list
+    """
+    facecasc = cv2.CascadeClassifier('newBackend/haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+    preds = []
+
+    for (x, y, w, h) in faces:
+        # Draw a rectangle around the face
+        cv2.rectangle(frame, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
+
+        # Process the region of interest
+        roi_gray = gray[y:y + h, x:x + w]
+        cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
+
+        # Predict emotion
+        prediction = model.predict(cropped_img, verbose=0)
+        preds.append(prediction[0])
+
+        # Get emotion with max probability
+        maxindex = int(np.argmax(prediction))
+        cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    return preds
+
+def predict_from_face(face: np.ndarray) -> Literal["Angry", "Disgusted", "Fearful", "Happy", "Neutral", "Sad", "Surprised"]:
+    prediction = model.predict(face, verbose=0)
+    maxindex = int(np.argmax(prediction))
+    return emotion_dict[maxindex]
 
 
 # Initialize FastAPI and Socket.IO
@@ -24,12 +121,12 @@ sio = socketio.AsyncServer(async_mode='asgi',
 app.mount("/socket.io", socketio.ASGIApp(sio))
 
 # CORS Configuration
-origins = [
-    'https://krackle.co',
-    'https://www.krackle.co',
-    'https://test.krackle.co',
-    'http://localhost:3000'
-]
+# origins = [
+#     'https://krackle.co',
+#     'https://www.krackle.co',
+#     'https://test.krackle.co',
+#     'http://localhost:3000'
+# ]
 
 app.add_middleware(
     CORSMiddleware,
