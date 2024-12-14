@@ -294,4 +294,4 @@ async def webcam_data(sid, data):
 
 # Run the FastAPI app
 # if __name__ == "__main__":
-#     uvicorn.run(app, host="127.0.0.1", port=8000)  # Running on port 8001, as port 8000 is taken by npm start
+#     uvicorn.run(app, host="127.0.0.1", port=8000)  # Running on port 8000, as port 3000 is taken by npm start
