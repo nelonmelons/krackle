@@ -119,14 +119,6 @@ sio = socketio.AsyncServer(async_mode='asgi',
 # Mount the Socket.IO server to FastAPI
 app.mount("/socket.io", socketio.ASGIApp(sio))
 
-# CORS Configuration
-# origins = [
-#     'https://krackle.co',
-#     'https://www.krackle.co',
-#     'https://test.krackle.co',
-#     'http://localhost:3000'
-# ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins='*',
