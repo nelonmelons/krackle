@@ -240,7 +240,7 @@ async def disconnect(sid):
 @sio.event
 async def webcam_data(sid, data):
     # Process the webcam data (base64 image)
-
+    print(data)
     lobby_code = data['lobbyCode']
     lobby = lobbies.get(lobby_code)
 
