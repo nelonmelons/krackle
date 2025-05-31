@@ -6,7 +6,7 @@ from .utils.image_utils import save_player_image, delete_lobby_images
 import numpy as np
 import sys
 import os
-from emotionTest import predict_emotion
+from emotion import predict_emotion
 
 
 class LobbyConsumer(AsyncWebsocketConsumer):
