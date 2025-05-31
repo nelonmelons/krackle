@@ -61,6 +61,7 @@ export default function KrackleLobby() {
         localStorage.setItem("krackle_username", name)
         localStorage.setItem("krackle_lobby", lobbyCode)
         localStorage.setItem("krackle_user_token", data.player_token)
+        localStorage.setItem("krackle_role", "player")
 
         // Redirect to the lobby page
         router.push(`/lobby?lobby_code=${encodeURIComponent(lobbyCode)}`)

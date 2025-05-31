@@ -51,6 +51,8 @@ export default function LobbyPage() {
     const storedAdminToken = localStorage.getItem("krackle_admin_token")
     const urlLobbyCode = searchParams.get("lobby_code")
 
+    setRole(localStorage.getItem("krackle_role"))
+
     if (!storedUsername || (!storedLobby && !urlLobbyCode)) {
       toast({
         title: "Session expired",
@@ -65,11 +67,9 @@ export default function LobbyPage() {
     setLobbyCode(storedLobby || urlLobbyCode)
     
     // Determine role and token
-    if (storedAdminToken) {
-      setRole("lobby-admin")
+    if (role === "admin") {
       setUserToken(storedAdminToken)
-    } else if (storedToken) {
-      setRole("player")
+    } else if (role === "player") {
       setUserToken(storedToken)
     } else {
       toast({
