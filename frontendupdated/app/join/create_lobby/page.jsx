@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Users, Clock, Trophy, Sparkles } from "lucide-react"
 
-const API_BASE_URL = "https://92ac-171-7-106-182.ngrok-free.app"
+const API_BASE_URL = "https://cd6f-202-28-7-4.ngrok-free.app"
 
 export default function CreateLobbyPage() {
   const [username, setUsername] = useState("")
@@ -70,11 +70,13 @@ export default function CreateLobbyPage() {
         },
         body: JSON.stringify({
           username: username,
-          max_player: Number.parseInt(maxPlayers),
+          max_players: Number.parseInt(maxPlayers),
           lobby_name: lobbyName,
           rounds: Number.parseInt(rounds),
         }),
       })
+
+      console.log("lobby_name:", lobbyName);
 
       const data = await response.json()
 

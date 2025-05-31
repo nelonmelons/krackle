@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Users, Play, LogOut, Copy, Check } from "lucide-react"
 
-const API_BASE_URL = "https://92ac-171-7-106-182.ngrok-free.app"
+const API_BASE_URL = "https://cd6f-202-28-7-4.ngrok-free.app"
 
 export default function LobbyPage() {
   const [players, setPlayers] = useState([])
@@ -48,10 +48,14 @@ export default function LobbyPage() {
 
   const fetchPlayers = async (lobby) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/play/?lobby=${encodeURIComponent(lobby)}`, {
+      const response = await fetch(`${API_BASE_URL}/play/?lobby_code=${encodeURIComponent(lobby)}`, {
+        method: "GET",
         headers: {
+          "Content-Type": "application/json",
           "X-Lobby-Code": lobby,
+          "ngrok-skip-browser-warning": "true",
         },
+
       })
 
       if (response.ok) {
