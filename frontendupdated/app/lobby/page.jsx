@@ -51,7 +51,9 @@ export default function LobbyPage() {
     mutePlayer,
     unmutePlayer,
     changeSettings,
-    sendMessage, // We'll use this for face detection data and image upload
+    sendMessage,
+    disconnect,
+    data, // Add this to access WebSocket messages
   } = useWebSocket(lobbyCode, username, userToken, role)
 
   // Handle image upload
@@ -591,6 +593,26 @@ export default function LobbyPage() {
     return () => clearInterval(interval)
   }, [detectionActive, lastFaceDetectedTime, faceDetected])
 
+  // Handle game_started event and redirect to game page
+  useEffect(() => {
+    if (data && data.type === "lobby.message" && data.event === "game_started") {
+      toast({
+        title: "Game Started!",
+        description: data.message,
+      })
+
+      // Store verified players for the game page
+      if (data.verified_players) {
+        localStorage.setItem("krackle_verified_players", JSON.stringify(data.verified_players))
+      }
+
+      // Redirect to game page after a short delay
+      setTimeout(() => {
+        router.push("/game")
+      }, 1500)
+    }
+  }, [data, router, toast])
+
   const handleLeaveGame = () => {
     leaveLobby()
     localStorage.removeItem("krackle_username")
@@ -650,7 +672,21 @@ export default function LobbyPage() {
       })
       return
     }
-    startGame()
+
+    // Send start_game message through WebSocket
+    if (isConnected && sendMessage) {
+      sendMessage("start_game")
+      toast({
+        title: "Starting Game",
+        description: "Initializing the game...",
+      })
+    } else {
+      toast({
+        title: "Connection Error",
+        description: "Not connected to the server",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleSaveSettings = () => {
