@@ -36,6 +36,7 @@ export default function LobbyPage() {
   const messagesEndRef = useRef(null)
   // Get WebSocket connection
   const {
+    game_started,
     verified_usernames,
     isConnected,
     messages,
@@ -595,16 +596,13 @@ export default function LobbyPage() {
 
   // Handle game_started event and redirect to game page
   useEffect(() => {
-    if (data && data.type === "lobby.message" && data.event === "game_started") {
+    if (game_started) {
+      console.log("Game started event received:", data)
+
       toast({
         title: "Game Started!",
         description: data.message,
       })
-
-      // Store verified players for the game page
-      if (data.verified_players) {
-        localStorage.setItem("krackle_verified_players", JSON.stringify(data.verified_players))
-      }
 
       // Redirect to game page after a short delay
       setTimeout(() => {

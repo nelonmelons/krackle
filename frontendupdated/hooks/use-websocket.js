@@ -11,6 +11,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
   const [lobbyInfo, setLobbyInfo] = useState({})
   const [connectionError, setConnectionError] = useState(null)
   const [verified_usernames, setVerifiedUsername] = useState(null)
+  const [game_started, setGameStarted] = useState(false)
   
   const [data, setData] = useState({})
   const socketRef = useRef(null)
@@ -135,6 +136,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           break
 
         case 'game_started':
+          setGameStarted(true)
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'system',
@@ -306,6 +308,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     }
   }, [connect, disconnect])
   return {
+    game_started,
     verified_usernames,
     isConnected,
     messages,
