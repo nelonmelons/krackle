@@ -49,6 +49,7 @@ export default function LobbyPage() {
   const fetchPlayers = async (lobby) => {
     try {
       const response = await fetch(`${API_BASE_URL}/play/?lobby=${encodeURIComponent(lobby)}`, {
+        method: "GET",
         headers: {
           "X-Lobby-Code": lobby,
         },
