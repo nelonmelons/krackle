@@ -55,11 +55,15 @@ def create_lobby(request):
 
     return JsonResponse({"error": "Only POST method is allowed."}, status=405)
 
-
+@csrf_exempt
 def join_lobby(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
-        lobby_code = request.GET.get('lobby')
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            username = data.get('username')
+            lobby_code = data.get('lobby_code')
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON payload."}, status=400)
 
         if not username or not lobby_code:
             return JsonResponse({"error": "Username and lobby parameters are required."}, status=400)
@@ -70,17 +74,14 @@ def join_lobby(request):
         lobby_info = lobbies_data[lobby_code]
 
         if username in lobby_info["players"]:
-            # Allow re-joining HTTP if not yet connected via WebSocket with a token,
-            # but prevent getting multiple tokens for the same username if one is already active.
-            # This logic might need refinement based on desired behavior for re-joining.
-            # For now, if already in players list, check if they have an active WS connection.
-            # This simple check is for username uniqueness in the HTTP players list.
              pass # Allow to proceed to get a token if they aren't in players list yet.
 
         if username not in lobby_info["players"]: # Only add if not already in the list
             if len(lobby_info["players"]) >= lobby_info["max_players"]:
                 return JsonResponse({"error": f"Lobby '{lobby_code}' is full (HTTP join limit)."}, status=400)
             lobby_info["players"].append(username)
+        else:
+            return JsonResponse({"error": f"Username '{username}' is already in the lobby."}, status=400)
         
         # Generate a player token for WebSocket connection
         player_token = uuid.uuid4().hex

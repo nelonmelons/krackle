@@ -25,14 +25,14 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default_secret_key')  # Use environ
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['92ac-171-7-106-182.ngrok-free.app', 'api.hayson.me']
+ALLOWED_HOSTS = ['api.hayson.me', 'cd6f-202-28-7-4.ngrok-free.app']
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     # Add your ngrok https URL if you test your frontend against it directly
     # e.g., 'https://your-ngrok-frontend-domain.ngrok-free.app' 
     # Also, ensure your ALLOWED_HOSTS includes the domain Django is served from if different
-    'https://92ac-171-7-106-182.ngrok-free.app' # If your backend is served here and frontend accesses it
+    'https://cd6f-202-28-7-4.ngrok-free.app' # If your backend is served here and frontend accesses it
 ]
 
 # Application definition
@@ -100,17 +100,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'krackleAPI.wsgi.application'
-ASGI_APPLICATION = 'krackleAPI.asgi.application' # Tells Django to use your ASGI config
+ASGI_APPLICATION = 'krackleAPI.asgi.application'
 
 # Channel Layers Configuration
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer" # For development
-        # For production, use Redis:
-        # "BACKEND": "channels_redis.core.RedisChannelLayer",
-        # "CONFIG": {
-        #     "hosts": [("localhost", 6379)], # Your Redis server address
-        # },
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
     },
 }
 
