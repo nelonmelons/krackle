@@ -87,16 +87,6 @@ export default function LobbyPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Log current players every 5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isConnected) {
-        console.log("Current players in lobby:", players)
-      }
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [isConnected, players])
-
   const handleLeaveGame = () => {
     leaveLobby()
     localStorage.removeItem("krackle_username")
