@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
+import { ArrowLeft, Users, Clock, Trophy, Sparkles } from "lucide-react"
 
 const API_BASE_URL = "https://92ac-171-7-106-182.ngrok-free.app"
 
@@ -112,84 +113,161 @@ export default function CreateLobbyPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-purple-500 to-purple-800">
-      <div className="text-center mb-8">
-        <h1 className="text-white text-6xl font-bold tracking-wide">
-          KRACKLE.CO <span className="text-5xl">😂</span>
-        </h1>
-        <h2 className="text-white text-2xl mt-4">Create New Game</h2>
-        <p className="text-white text-lg mt-2">Welcome, {username}!</p>
-      </div>
-
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="lobbyName" className="text-xl font-medium">
-              Lobby Name:
-            </label>
-            <Input
-              id="lobbyName"
-              value={lobbyName}
-              onChange={(e) => setLobbyName(e.target.value)}
-              placeholder="Enter lobby name"
-              className="rounded-full border-2 border-pink-200 h-14 px-6 text-lg"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex flex-col justify-between px-4 py-6">
+      {/* Header Section */}
+      <div className="text-center">
+        <div className="relative inline-block">
+          <h1 className="text-white text-5xl md:text-6xl font-black tracking-tight drop-shadow-2xl relative z-10">
+            KRACKLE
+            <span className="text-yellow-300 animate-pulse">.CO</span>
+          </h1>
+          <div className="absolute -top-1 -right-1 text-2xl animate-bounce">
+            <Sparkles className="text-yellow-300 drop-shadow-lg" />
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="maxPlayers" className="text-xl font-medium">
-              Max Players:
-            </label>
-            <Input
-              id="maxPlayers"
-              type="number"
-              min="2"
-              max="10"
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(e.target.value)}
-              placeholder="Enter max players (2-10)"
-              className="rounded-full border-2 border-pink-200 h-14 px-6 text-lg"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="rounds" className="text-xl font-medium">
-              Rounds:
-            </label>
-            <Input
-              id="rounds"
-              type="number"
-              min="1"
-              max="20"
-              value={rounds}
-              onChange={(e) => setRounds(e.target.value)}
-              placeholder="Enter number of rounds"
-              className="rounded-full border-2 border-pink-200 h-14 px-6 text-lg"
-            />
-          </div>
+        </div>
+        <p className="text-white/90 text-lg md:text-xl mt-2 font-medium drop-shadow-lg">Create Your Game Lobby</p>
+        <div className="flex items-center justify-center gap-2 mt-1 text-white/70">
+          <Trophy className="w-4 h-4" />
+          <span className="text-sm font-medium">Welcome back, {username}!</span>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mt-8">
-        <Button
-          className="bg-green-400 hover:bg-green-500 text-white rounded-full px-12 py-6 text-xl font-bold"
-          onClick={handleCreateLobby}
-          disabled={isLoading}
-        >
-          {isLoading ? "CREATING..." : "CREATE LOBBY"}
-        </Button>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+        {/* Main Form Card */}
+        <div className="relative group w-full max-w-2xl">
+          {/* Glow effect behind card */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
 
-        <Button
-          className="bg-gray-400 hover:bg-gray-500 text-white rounded-full px-8 py-6 text-xl font-bold"
-          onClick={handleGoBack}
-          disabled={isLoading}
-        >
-          GO BACK
-        </Button>
+          <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Lobby Name */}
+              <div className="space-y-2">
+                <label htmlFor="lobbyName" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+                  Lobby Name
+                </label>
+                <div className="relative">
+                  <Input
+                    id="lobbyName"
+                    value={lobbyName}
+                    onChange={(e) => setLobbyName(e.target.value)}
+                    placeholder="Enter a fun lobby name"
+                    className="h-12 px-4 text-base rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition-all duration-300 bg-white/80 backdrop-blur-sm font-medium placeholder:text-gray-400"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Max Players */}
+              <div className="space-y-2">
+                <label htmlFor="maxPlayers" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></div>
+                  Max Players
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="maxPlayers"
+                    type="number"
+                    min="2"
+                    max="10"
+                    value={maxPlayers}
+                    onChange={(e) => setMaxPlayers(e.target.value)}
+                    placeholder="2-10 players"
+                    className="h-12 pl-12 pr-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-300 bg-white/80 backdrop-blur-sm font-medium placeholder:text-gray-400"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rounds */}
+              <div className="space-y-2 md:col-span-2">
+                <label htmlFor="rounds" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
+                  Number of Rounds
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="rounds"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={rounds}
+                    onChange={(e) => setRounds(e.target.value)}
+                    placeholder="How many rounds to play?"
+                    className="h-12 pl-12 pr-4 text-base rounded-xl border-2 border-gray-200 focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all duration-300 bg-white/80 backdrop-blur-sm font-medium placeholder:text-gray-400"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+          {/* Create Lobby Button */}
+          <Button
+            className="relative group h-14 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:scale-105 border-0 overflow-hidden"
+            onClick={handleCreateLobby}
+            disabled={isLoading}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            <div className="relative flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
+              <span>{isLoading ? "CREATING..." : "CREATE LOBBY"}</span>
+            </div>
+          </Button>
+
+          {/* Go Back Button */}
+          <Button
+            className="relative group h-14 px-6 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:scale-105 border-0 overflow-hidden"
+            onClick={handleGoBack}
+            disabled={isLoading}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            <div className="relative flex items-center gap-2">
+              <ArrowLeft className="w-5 h-5" />
+              <span>GO BACK</span>
+            </div>
+          </Button>
+        </div>
+
+        {/* Game Settings Info */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+          {[
+            { icon: "🎮", title: "Quick Setup", desc: "Get your game running in seconds" },
+            { icon: "👥", title: "Multiplayer Fun", desc: "Play with 2-10 friends" },
+            { icon: "🏆", title: "Customizable", desc: "Set your own rules and rounds" },
+          ].map((feature, index) => (
+            <div
+              key={index}
+              className="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center border border-white/20 hover:bg-white/20 transition-all duration-300 group"
+            >
+              <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                {feature.icon}
+              </div>
+              <h3 className="text-white font-bold text-base mb-1">{feature.title}</h3>
+              <p className="text-white/70 text-sm">{feature.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-auto py-6 text-white text-xs">
-        MADE WITH LOVE BY HAYSON, NELSON, AND BOYA <span className="ml-1">❤️</span>
+      {/* Footer */}
+      <div className="text-center">
+        <div className="text-white/60 text-sm font-medium">
+          Crafted with ❤️ by <span className="text-white/80 font-semibold">Hayson, Nelson & Boya</span>
+        </div>
+        <div className="text-white/40 text-xs mt-1">© 2024 Krackle.co - All rights reserved</div>
       </div>
     </div>
   )

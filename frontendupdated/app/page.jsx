@@ -39,10 +39,14 @@ export default function KrackleLobby() {
 
     setIsLoading(true)
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/join/?username=${encodeURIComponent(name)}&lobby=${encodeURIComponent(lobbyCode)}`,
-      )
-
+      // Send GET request to /play endpoint with lobby code in JSON header
+      const response = await fetch(`${API_BASE_URL}/play?username=${encodeURIComponent(name)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Lobby-Data": JSON.stringify({ lobby_code: lobbyCode }),
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
