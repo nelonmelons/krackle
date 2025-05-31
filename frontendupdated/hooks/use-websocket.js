@@ -326,6 +326,6 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     changeSettings,
     sendMessage, // Expose the general sendMessage function
     disconnect,
-    reconnect: connect
+    data
   }
 }

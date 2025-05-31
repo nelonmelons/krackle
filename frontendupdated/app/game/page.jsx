@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/toast"
+import { useToast } from "@/hooks/use-toast"
 import { useWebSocket } from "@/hooks/use-websocket"
 import { Loader2, RefreshCw, LogOut, Users, Play, Crown } from "lucide-react"
 
