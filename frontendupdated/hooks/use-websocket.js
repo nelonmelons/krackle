@@ -12,6 +12,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
   const [connectionError, setConnectionError] = useState(null)
   const [verified_usernames, setVerifiedUsername] = useState(null)
   const [game_started, setGameStarted] = useState(false)
+  const [video_url, setVideoUrl] = useState(null)
   
   const [data, setData] = useState({})
   const socketRef = useRef(null)
@@ -209,6 +210,20 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           })
           break
 
+        case 'game_video':
+          setVideoUrl(data.url)
+          setMessages(prev => [...prev, {
+            id: Date.now(),
+            type: 'system',
+            message: `Game video available at ${data.url}`,
+            timestamp: new Date()
+          }])
+          toast({
+            title: "Game Video Available",
+            description: `Game video available at ${data.url}`,
+          })
+          break
+
         default:
           console.log("Unhandled lobby event:", data.event)
       }
@@ -308,6 +323,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     }
   }, [connect, disconnect])
   return {
+    video_url,
     game_started,
     verified_usernames,
     isConnected,

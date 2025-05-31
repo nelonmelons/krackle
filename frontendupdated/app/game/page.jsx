@@ -14,9 +14,9 @@ export default function GamePage() {
   const [lobbyCode, setLobbyCode] = useState("")
   const [userToken, setUserToken] = useState("")
   const [role, setRole] = useState("player")
-  const [videoUrl, setVideoUrl] = useState("")
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
   const [verifiedPlayers, setVerifiedPlayers] = useState([])
+  const [videoUrl, setVideoUrl] = useState("")
   const videoContainerRef = useRef(null)
 
   const router = useRouter()
@@ -24,7 +24,7 @@ export default function GamePage() {
   const { toast } = useToast()
 
   // Connect to WebSocket
-  const { isConnected, players, connectionError, sendMessage, disconnect } = useWebSocket(
+  const { video_url, isConnected, players, connectionError, sendMessage, disconnect } = useWebSocket(
     lobbyCode,
     username,
     userToken,
@@ -33,6 +33,7 @@ export default function GamePage() {
 
   useEffect(() => {
     // Get data from localStorage
+
     const storedUsername = localStorage.getItem("krackle_username")
     const storedLobby = localStorage.getItem("krackle_lobby")
     const storedToken = localStorage.getItem("krackle_user_token")
@@ -94,17 +95,6 @@ export default function GamePage() {
               requestNewVideo()
             }
           }
-
-          // Handle video URL response
-          if (data.type === "video_url") {
-            setVideoUrl(data.url)
-            setIsLoadingVideo(false)
-
-            toast({
-              title: "Video Loaded",
-              description: "New video has been loaded",
-            })
-          }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error)
         }
@@ -123,6 +113,13 @@ export default function GamePage() {
     }
   }, [role, toast])
 
+  //  Handle video URL updates from WebSocket
+  useEffect(() => {
+    if (video_url) {
+      load_video_from_url(video_url)
+    }
+  }, [video_url])
+
   // Request a new video from the server
   const requestNewVideo = async () => {
     setIsLoadingVideo(true)
@@ -131,8 +128,8 @@ export default function GamePage() {
       if (isConnected && sendMessage) {
         sendMessage("new_game_video")
         toast({
-          title: "Requesting Video",
-          description: "Fetching a new video...",
+          title: "🎮 Requesting New Video",
+          description: "Fetching an exciting new video for the game...",
         })
       } else {
         // Fallback to REST API if WebSocket is not connected
@@ -148,17 +145,9 @@ export default function GamePage() {
 
         if (response.ok) {
           const data = await response.json()
-          setVideoUrl(data.video_url || "")
-          toast({
-            title: "Video Loaded",
-            description: "New video has been loaded",
-          })
-        } else {
-          toast({
-            title: "Error loading video",
-            description: "Could not load a new video. Please try again.",
-            variant: "destructive",
-          })
+          if (data.url) {
+            load_video_from_url(data.url)
+          }
         }
       }
     } catch (error) {
@@ -182,6 +171,207 @@ export default function GamePage() {
     const match = url.match(regExp)
 
     return match && match[2].length === 11 ? match[2] : null
+  }
+
+  // Load video from URL with aesthetic integration
+  const load_video_from_url = (video_url) => {
+    if (!video_url || !videoContainerRef.current) {
+      console.warn("No video URL provided or container not found")
+      return
+    }
+
+    // Clear any existing content
+    const container = videoContainerRef.current
+    container.innerHTML = ""
+
+    // Create aesthetic loading overlay
+    const loadingOverlay = document.createElement("div")
+    loadingOverlay.className =
+      "absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm z-10 transition-opacity duration-500"
+    loadingOverlay.innerHTML = `
+    <div class="text-center">
+      <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-white text-lg font-medium">Loading video...</p>
+      <div class="mt-2 flex justify-center space-x-1">
+        <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+        <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+        <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+      </div>
+    </div>
+  `
+    container.appendChild(loadingOverlay)
+
+    // Extract video ID and determine video type
+    const videoId = getYouTubeVideoId(video_url)
+
+    if (videoId) {
+      // Create YouTube iframe with aesthetic wrapper
+      const videoWrapper = document.createElement("div")
+      videoWrapper.className = "relative w-full h-full flex items-center justify-center"
+
+      // Create glassmorphism frame around video
+      const videoFrame = document.createElement("div")
+      videoFrame.className =
+        "relative w-full max-w-md h-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+
+      // Add decorative gradient border
+      const gradientBorder = document.createElement("div")
+      gradientBorder.className =
+        "absolute inset-0 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-blue-500/30 rounded-2xl"
+
+      // Inner container for video
+      const innerContainer = document.createElement("div")
+      innerContainer.className = "relative w-full h-full m-1 bg-black rounded-xl overflow-hidden"
+
+      // Create iframe
+      const iframe = document.createElement("iframe")
+      iframe.className = "absolute inset-0 w-full h-full"
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&disablekb=0&fs=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&enablejsapi=1`
+      iframe.title = "Game Video Player"
+      iframe.frameBorder = "0"
+      iframe.allow =
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      iframe.allowFullscreen = true
+
+      // Add floating video info overlay
+      const videoInfo = document.createElement("div")
+      videoInfo.className =
+        "absolute top-4 left-4 right-4 bg-black/50 backdrop-blur-md rounded-lg p-3 text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity duration-300 z-20"
+      videoInfo.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          Now Playing
+        </span>
+        <span class="text-xs text-white/70">Lobby: ${lobbyCode}</span>
+      </div>
+    `
+
+      // Add aesthetic corner decorations
+      const cornerDecorations = document.createElement("div")
+      cornerDecorations.className = "absolute inset-0 pointer-events-none"
+      cornerDecorations.innerHTML = `
+      <div class="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30 rounded-tl-lg"></div>
+      <div class="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30 rounded-tr-lg"></div>
+      <div class="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30 rounded-bl-lg"></div>
+      <div class="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30 rounded-br-lg"></div>
+    `
+
+      // Handle iframe load event
+      iframe.onload = () => {
+        // Fade out loading overlay
+        loadingOverlay.style.opacity = "0"
+        setTimeout(() => {
+          if (loadingOverlay.parentNode) {
+            loadingOverlay.parentNode.removeChild(loadingOverlay)
+          }
+        }, 500)
+
+        // Add entrance animation to video
+        videoFrame.style.transform = "scale(0.9) translateY(20px)"
+        videoFrame.style.opacity = "0"
+
+        setTimeout(() => {
+          videoFrame.style.transition = "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)"
+          videoFrame.style.transform = "scale(1) translateY(0)"
+          videoFrame.style.opacity = "1"
+        }, 100)
+
+        // Show success toast
+        if (toast) {
+          toast({
+            title: "🎬 Video Loaded Successfully",
+            description: "The video is now playing in portrait mode",
+          })
+        }
+      }
+
+      iframe.onerror = () => {
+        handleVideoError("Failed to load YouTube video")
+      }
+
+      // Assemble the video structure
+      innerContainer.appendChild(iframe)
+      videoFrame.appendChild(gradientBorder)
+      videoFrame.appendChild(innerContainer)
+      videoFrame.appendChild(videoInfo)
+      videoFrame.appendChild(cornerDecorations)
+      videoWrapper.appendChild(videoFrame)
+      container.appendChild(videoWrapper)
+    } else {
+      // Handle direct video URLs (mp4, webm, etc.)
+      const videoWrapper = document.createElement("div")
+      videoWrapper.className = "relative w-full h-full flex items-center justify-center"
+
+      const videoFrame = document.createElement("div")
+      videoFrame.className =
+        "relative w-full max-w-md h-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+
+      const video = document.createElement("video")
+      video.className = "w-full h-full object-cover rounded-xl"
+      video.src = video_url
+      video.controls = true
+      video.autoplay = true
+      video.muted = true // Start muted to allow autoplay
+      video.playsInline = true
+
+      video.onloadeddata = () => {
+        loadingOverlay.style.opacity = "0"
+        setTimeout(() => {
+          if (loadingOverlay.parentNode) {
+            loadingOverlay.parentNode.removeChild(loadingOverlay)
+          }
+        }, 500)
+
+        if (toast) {
+          toast({
+            title: "🎬 Video Loaded Successfully",
+            description: "The video is now playing",
+          })
+        }
+      }
+
+      video.onerror = () => {
+        handleVideoError("Failed to load video file")
+      }
+
+      videoFrame.appendChild(video)
+      videoWrapper.appendChild(videoFrame)
+      container.appendChild(videoWrapper)
+    }
+
+    // Helper function to handle video errors
+    function handleVideoError(errorMessage) {
+      loadingOverlay.innerHTML = `
+      <div class="text-center">
+        <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <p class="text-red-400 text-lg font-medium mb-2">Video Load Error</p>
+        <p class="text-white/70 text-sm">${errorMessage}</p>
+        <button onclick="this.parentElement.parentElement.parentElement.innerHTML='<div class=\\'absolute inset-0 flex items-center justify-center\\'>
+          <div class=\\'text-center\\'>
+            <svg class=\\'w-12 h-12 mx-auto mb-4 text-gray-500\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'>
+              <path strokeLinecap=\\'round\\' strokeLinejoin=\\'round\\' strokeWidth=\\'2\\' d=\\'M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\\' />
+            </svg>
+            <p class=\\'text-gray-500\\'>Waiting for video...</p>
+          </div>
+        </div>'" class="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors duration-200">
+          Dismiss
+        </button>
+      </div>
+    `
+
+      if (toast) {
+        toast({
+          title: "Video Error",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
+    }
   }
 
   const videoId = getYouTubeVideoId(videoUrl)
