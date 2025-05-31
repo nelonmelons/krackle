@@ -13,6 +13,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
   const [verified_usernames, setVerifiedUsername] = useState(null)
   const [game_started, setGameStarted] = useState(false)
   const [video_url, setVideoUrl] = useState(null)
+  const [laughMeters, setLaughMeters] = useState({}) // Added laughMeters state
   
   const [data, setData] = useState({})
   const socketRef = useRef(null)
@@ -224,6 +225,13 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           })
           break
 
+        case 'emotion_prediction_update': // Added case for emotion_prediction_update
+          if (data.laugh_meters) {
+            setLaughMeters(data.laugh_meters)
+            console.log("Laugh meters updated:", data.laugh_meters)
+          }
+          break
+
         default:
           console.log("Unhandled lobby event:", data.event)
       }
@@ -322,15 +330,18 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
       disconnect()
     }
   }, [connect, disconnect])
+  // Return new state and functions
   return {
-    video_url,
-    game_started,
-    verified_usernames,
     isConnected,
     messages,
     players,
     lobbyInfo,
     connectionError,
+    verified_usernames,
+    game_started,
+    video_url,
+    laughMeters, // Return laughMeters
+    data,
     sendChatMessage,
     leaveLobby,
     kickPlayer,
@@ -340,8 +351,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     mutePlayer,
     unmutePlayer,
     changeSettings,
-    sendMessage, // Expose the general sendMessage function
+    sendMessage,
     disconnect,
-    data
   }
 }

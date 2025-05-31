@@ -19,7 +19,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             query_string = self.scope['query_string'].decode()
             params = parse_qs(query_string)
             print(f"[LobbyConsumer] Query Params: {params}")
-
+            self.play_round = 0
+            self.rounds = 0
             self.lobby_code = params.get('lobby_code', [None])[0]
             self.username = params.get('username', [None])[0]
             self.user_token = params.get('user_token', [None])[0]
@@ -275,8 +276,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         """Handle admin starting the game"""
         print(f"[LobbyConsumer] Starting game for lobby {self.lobby_code}")
 
-        self.play_round = 1
-
         lobby_info = lobbies_data.get(self.lobby_code)
         if not lobby_info:
             return
@@ -493,6 +492,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         if game_state.get('status') == 'playing':
             await self.handle_emotion_prediction()
+            await self.send_private_message("emotion_prediction_update", lobby_info.get('laugh_meters'))
         else:
             await self.send_private_message("success", "Profile picture uploaded successfully!")
             # Broadcast verification update to all players
@@ -500,35 +500,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'verified_usernames': lobby_info['verified_players']
             })
 
-
-    async def handle_face_detection_admin_settings(self, payload):
-        """Handle admin face detection settings"""
-        lobby_info = lobbies_data.get(self.lobby_code)
-        if not lobby_info:
-            await self.send_private_message("error", "Lobby not found.")
-            return
-
-        # Initialize face detection settings
-        face_settings = lobby_info.setdefault('face_detection_settings', {
-            'enabled': False,
-            'required_mode': 'face',
-            'detection_frequency': 5,
-            'broadcast_to_all': False
-        })
-
-        # Update settings from payload
-        if 'enabled' in payload:
-            face_settings['enabled'] = payload['enabled']
-        if 'required_mode' in payload:
-            face_settings['required_mode'] = payload['required_mode']
-        if 'detection_frequency' in payload:
-            face_settings['detection_frequency'] = max(1, int(payload['detection_frequency']))
-        if 'broadcast_to_all' in payload:
-            face_settings['broadcast_to_all'] = payload['broadcast_to_all']
-
-        # Broadcast settings update to all players
-        await self.broadcast_lobby_update("face_detection_settings_update", face_settings)
-        await self.send_private_message("success", "Face detection settings updated!")
 
     async def send_private_message(self, message_type, message):
         """Send a private message to this user only"""
@@ -621,7 +592,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             url = urls[self.video_ind]
             self.video_ind += 1
             self.play_round += 1
-            if self.play_round > self.rounds:
+            rounds = lobbies_data[self.lobby_code]['rounds']
+            if self.play_round > rounds:
                 await self.send_private_message("success", "Game over!")
                 # broadcast game over,
                 return None
