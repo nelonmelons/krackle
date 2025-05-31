@@ -165,16 +165,18 @@ export default function GamePage() {
           <div className="bg-white rounded-xl p-4 flex-1 flex flex-col">
             <h3 className="text-2xl font-bold mb-4">YouTube Video</h3>
 
-            <div className="flex-1 relative w-full rounded-lg overflow-hidden bg-black">
+            <div className="flex-1 relative w-full rounded-lg overflow-hidden bg-black flex items-center justify-center">
               {videoId ? (
-                <iframe
-                  className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+                <div className="w-full max-w-3xl aspect-video">
+                  <iframe
+                    className="w-full h-full rounded-lg"
+                    src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <p className="text-gray-500">No video URL provided or invalid YouTube URL</p>
