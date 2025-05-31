@@ -81,8 +81,9 @@ export default function CreateLobbyPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // Store the lobby code and redirect to lobby page
+        // Store the lobby code and admin token
         localStorage.setItem("krackle_lobby", data.lobby_code || data.lobby_id)
+        localStorage.setItem("krackle_admin_token", data.admin_token)
 
         toast({
           title: "Lobby created!",

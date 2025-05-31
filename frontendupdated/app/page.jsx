@@ -24,42 +24,8 @@ export default function KrackleLobby() {
   const [name, setName] = useState("")
   const [lobbyCode, setLobbyCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [socketInfo, setSocketInfo] = useState(null);
   const router = useRouter()
   const { toast } = useToast()
-
-
-  //==========WEBSOCKET HANDLER==========
-  function LobbySocket({ lobbyCode, userToken, username, role }) {
-    const socketRef = useRef(null);
-    const [messages, setMessages] = useState([]);
-
-    useEffect(() => {
-      const wsURL = `wss://cd6f-202-28-7-4.ngrok-free.app/ws/connect/?lobby_code=${lobbyCode}&user_token=${userToken}&username=${username}&role=${role}`;
-      socketRef.current = new WebSocket(wsURL);
-
-      socketRef.current.onopen = () => console.log("✅ WebSocket connected");
-      socketRef.current.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setMessages((prev) => [...prev, data]);
-      };
-      socketRef.current.onerror = (err) => console.error("WebSocket error", err);
-      socketRef.current.onclose = () => console.log("❌ WebSocket closed");
-
-      return () => socketRef.current?.close();
-    }, [lobbyCode, userToken, username, role]);
-
-    return (
-      <div className="p-2">
-        <h3 className="text-lg font-bold">Socket Messages</h3>
-        <ul className="text-sm">
-          {messages.map((msg, idx) => (
-            <li key={idx}>{JSON.stringify(msg)}</li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
 
 
 
@@ -76,13 +42,16 @@ export default function KrackleLobby() {
     setIsLoading(true)
     try {
       // Send GET request to /play endpoint with lobby code in JSON header
-      const response = await fetch(`${API_BASE_URL}/play?username=${encodeURIComponent(name)}`, {
-        method: "GET",
+      const response = await fetch(`${API_BASE_URL}/join/`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Lobby-Code": lobbyCode,
           "ngrok-skip-browser-warning": "true",
         },
+        body: JSON.stringify({
+          username: name,
+          lobby_code: lobbyCode,
+        }),
       })
 
       const data = await response.json()
@@ -92,15 +61,6 @@ export default function KrackleLobby() {
         localStorage.setItem("krackle_username", name)
         localStorage.setItem("krackle_lobby", lobbyCode)
         localStorage.setItem("krackle_user_token", data.player_token)
-
-
-        setSocketInfo({
-          lobbyCode,
-          userToken: data.user_token,
-          username: name,
-          role: "player",
-        });
-
 
         // Redirect to the lobby page
         router.push(`/lobby?lobby_code=${encodeURIComponent(lobbyCode)}`)
@@ -124,7 +84,6 @@ export default function KrackleLobby() {
   }
 
   //==========CREATE GAME HANDLER==========
-
   const handleCreateGame = async () => {
     if (!name) {
       toast({
