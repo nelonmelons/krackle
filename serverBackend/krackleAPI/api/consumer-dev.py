@@ -2,11 +2,14 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 from .views.share_data import lobbies_data  # Corrected import path
-from .utils.image_utils import save_player_image, delete_lobby_images
+from .utils.image_utils import save_player_image, delete_lobby_images, get_player_image_url
 import numpy as np
 import sys
 import os
 from emotion import predict_emotion
+from django.conf import settings
+import cv2
+
 
 
 class LobbyConsumer(AsyncWebsocketConsumer):
@@ -269,6 +272,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     async def handle_start_game(self, payload):
         """Handle admin starting the game"""
+        self.play_round = 1
+
         lobby_info = lobbies_data.get(self.lobby_code)
         if not lobby_info:
             return
@@ -286,8 +291,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         # Simple implementation - just broadcast game start with verified players
         lobby_info['game_state'] = {
-            'status': 'started', 
-            'round': 1,
+            'status': 'playing', 
+            'round': self.play_round,
             'verified_players': verified_players.copy()
         }
 
@@ -473,6 +478,11 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Store the image filename
         player_images = lobby_info.setdefault('player_images', {})
         player_images[self.username] = filename
+
+        # If the game is currently playing, run emotion prediction
+        game_state = lobby_info.get('game_state', {})
+        if game_state.get('status') == 'playing':
+            await self.handle_emotion_prediction()
 
         await self.send_private_message("success", "Profile picture uploaded successfully!")
         
@@ -670,23 +680,26 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(self.lobby_group_name, message_data)
 
 
-    async def handle_emotion_prediction(self, payload):
+    async def handle_emotion_prediction(self):
         """Handle emotion prediction using face data"""
 
         # Dynamically import predict_emotion from newBackend/emotionTest.py
         backend_path = os.path.join(os.path.dirname(__file__), '../../newBackend')
         sys.path.append(os.path.abspath(backend_path))
         
-        face_data = payload.get('face_data')
-        if face_data is None:
+        face_url = get_player_image_url(self.lobby_code, self.username)  # Ensure player image URL is set)
+        # Read image from face_url using OpenCV and numpy
+        face = cv2.imread(face_url)
+        if face is None:
             await self.send_private_message("error", "No face data provided for emotion prediction.")
             return
 
         try:
-            face_array = np.array(face_data)
+            face_array = np.array(face)
             result = predict_emotion(face_array)
-            await self.send_private_message("emotion_prediction", result)
-            return result
+            
+            lobbies_data[self.lobby_code]['laugh_meters'][self.username] += 0.1 if result in ['Happy', 'Surprised'] else -0.005
+            return
         except Exception as e:
             await self.send_private_message("error", f"Emotion prediction failed: {e}")
             return None
