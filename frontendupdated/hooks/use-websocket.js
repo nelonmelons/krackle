@@ -97,7 +97,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           break
 
         case 'user_left':
-          setPlayers(data.connected_players || [])
+          setPlayers(data.players_in_lobby || [])
           setLobbyInfo({
             code: data.lobby_code,
             name: data.lobby_name,
