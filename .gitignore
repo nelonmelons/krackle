@@ -24,6 +24,7 @@ pip-wheel-metadata/
 .pytype/
 venv/
 env/
+.venv
 
 # OS
 .DS_Store
