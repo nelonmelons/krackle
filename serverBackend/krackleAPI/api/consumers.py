@@ -659,6 +659,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'lobby_name': lobby_info.get('name'),
                 'host': lobby_info.get('host_username'),
                 'players_in_lobby': lobby_info.get('players', []),
+                'valid_players':  lobby_info.get('verified_players', [])
             }
 
             if extra_data:
