@@ -140,11 +140,11 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Player actions
         elif message_type == 'leave_lobby':
             await self.handle_leave_lobby()
-
+        
         # Image upload for verification
         elif message_type == 'upload_image':
             await self.handle_upload_image(payload)
-
+        
         # Face detection data for verification
         elif message_type == 'face_detection_data':
             await self.handle_face_detection_data(payload)
@@ -272,17 +272,17 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Check if all players are verified
         players = lobby_info.get('players', [])
         verified_players = lobby_info.get('verified_players', [])
-
+        
         unverified_players = [player for player in players if player not in verified_players]
-
+        
         if unverified_players:
-            await self.send_private_message("error",
-                                            f"Cannot start game. The following players haven't submitted their photos: {', '.join(unverified_players)}")
+            await self.send_private_message("error", 
+                f"Cannot start game. The following players haven't submitted their photos: {', '.join(unverified_players)}")
             return
 
         # Simple implementation - just broadcast game start with verified players
         lobby_info['game_state'] = {
-            'status': 'started',
+            'status': 'started', 
             'round': 1,
             'verified_players': verified_players.copy()
         }
@@ -471,7 +471,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         player_images[self.username] = filename
 
         await self.send_private_message("success", "Profile picture uploaded successfully!")
-
+        
         # Broadcast verification update to all players
         await self.broadcast_lobby_update("player_verified", {
             'verified_username': self.username,
@@ -483,7 +483,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         """Handle face detection data for verification"""
         face_data = payload.get('face_data')
         detection_mode = payload.get('detection_mode', 'face')
-
+        
         if not face_data:
             await self.send_private_message("error", "No face detection data provided.")
             return
@@ -510,12 +510,12 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         faces_detected = face_data.get('faces_detected', 0)
         if faces_detected == 1:  # Exactly one face detected
             player_face_data['verification_status'] = 'verified'
-
+            
             # Add to verified players if face detection is successful
             verified_players = lobby_info.setdefault('verified_players', [])
             if self.username not in verified_players:
                 verified_players.append(self.username)
-
+                
                 # Broadcast verification update
                 await self.broadcast_lobby_update("player_verified", {
                     'verified_username': self.username,
@@ -523,17 +523,16 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                     'total_verified': len(verified_players),
                     'total_players': len(lobby_info.get('players', []))
                 })
-
+                
             await self.send_private_message("success", "Face verification successful!")
-
+        
         elif faces_detected == 0:
             player_face_data['verification_status'] = 'no_face'
             await self.send_private_message("warning", "No face detected. Please ensure your face is visible.")
-
+        
         elif faces_detected > 1:
             player_face_data['verification_status'] = 'multiple_faces'
-            await self.send_private_message("warning",
-                                            "Multiple faces detected. Please ensure only one person is visible.")
+            await self.send_private_message("warning", "Multiple faces detected. Please ensure only one person is visible.")
 
         # Broadcast face detection stats to admin
         await self.broadcast_lobby_update("face_detection_update", {
@@ -597,7 +596,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'verification_status': status,
                 'last_detection_mode': data.get('detection_mode', 'unknown')
             }
-
+            
             if status == 'verified':
                 stats['verified_via_face'] += 1
             elif status in ['no_face', 'multiple_faces']:

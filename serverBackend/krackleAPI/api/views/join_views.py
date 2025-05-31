@@ -41,9 +41,11 @@ def create_lobby(request):
             "admin_token": admin_token, # Host uses this as their user_token
             "host_username": username,
             "players": [username], # Creator is the first player
+            "verified_players": [], # Players who have submitted their photos
+            "player_images": {}, # Mapping of username to image filename
             "game_state": {},
             "connected_users": {}, # For WebSocket connected users
-            "issued_player_tokens": {} # For tokens issued to players via HTTP join
+            "issued_player_tokens": {admin_token: username}
         }
 
         return JsonResponse({
@@ -74,15 +76,13 @@ def join_lobby(request):
         lobby_info = lobbies_data[lobby_code]
 
         if username in lobby_info["players"]:
-             pass # Allow to proceed to get a token if they aren't in players list yet.
+             pass
 
-        if username not in lobby_info["players"]: # Only add if not already in the list
+        if username not in lobby_info["players"]:
             if len(lobby_info["players"]) >= lobby_info["max_players"]:
                 return JsonResponse({"error": f"Lobby '{lobby_code}' is full (HTTP join limit)."}, status=400)
             lobby_info["players"].append(username)
-        else:
-            return JsonResponse({"error": f"Username '{username}' is already in the lobby."}, status=400)
-        
+
         # Generate a player token for WebSocket connection
         player_token = uuid.uuid4().hex
         lobby_info["issued_player_tokens"][player_token] = username

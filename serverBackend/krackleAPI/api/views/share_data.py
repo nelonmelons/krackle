@@ -10,6 +10,11 @@
 #     "admin_token": "unique_admin_token_for_this_lobby", # Token for lobby management, also user_token for admin
 #     "host_username": "creator_username", # Username of the host
 #     "players": ["creator_username", "player2", "player3"], # List of player usernames who have *HTTP joined*
+#     "verified_players": ["creator_username", "player2"], # List of players who have submitted and verified their photos
+#     "player_images": { # Mapping of username to their profile image filename
+#         "creator_username": "LOBBY_CODE_creator_username.jpg",
+#         "player2": "LOBBY_CODE_player2.jpg"
+#     },
 #     "game_state": {}, # Placeholder for game-specific data
 #     "connected_users": { # Users currently connected via WebSocket, keyed by user_token
 #         # "user_token_example": {
