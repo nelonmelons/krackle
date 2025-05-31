@@ -3,6 +3,10 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 from .views.share_data import lobbies_data  # Corrected import path
 from .utils.image_utils import save_player_image, delete_lobby_images
+import numpy as np
+import sys
+import os
+from emotionTest import predict_emotion
 
 
 class LobbyConsumer(AsyncWebsocketConsumer):
@@ -664,3 +668,25 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 message_data.update(extra_data)
 
             await self.channel_layer.group_send(self.lobby_group_name, message_data)
+
+
+    async def handle_emotion_prediction(self, payload):
+        """Handle emotion prediction using face data"""
+
+        # Dynamically import predict_emotion from newBackend/emotionTest.py
+        backend_path = os.path.join(os.path.dirname(__file__), '../../newBackend')
+        sys.path.append(os.path.abspath(backend_path))
+        
+        face_data = payload.get('face_data')
+        if face_data is None:
+            await self.send_private_message("error", "No face data provided for emotion prediction.")
+            return
+
+        try:
+            face_array = np.array(face_data)
+            result = predict_emotion(face_array)
+            await self.send_private_message("emotion_prediction", result)
+            return result
+        except Exception as e:
+            await self.send_private_message("error", f"Emotion prediction failed: {e}")
+            return None
