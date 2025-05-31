@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { useWebSocket } from "@/hooks/use-websocket"
-import { Loader2, RefreshCw, LogOut, Users, Play, Crown, Heart } from "lucide-react"
+import { Loader2, RefreshCw, LogOut, Users, Play, Crown } from "lucide-react"
 
 const API_BASE_URL = "https://cd6f-202-28-7-4.ngrok-free.app"
 
@@ -132,6 +132,55 @@ export default function GamePage() {
       load_video_from_url(video_url)
     }
   }, [video_url])
+
+  // Initialize webcam
+  useEffect(() => {
+    const initWebcam = async () => {
+      const videoElement = document.getElementById("webcam")
+      if (!videoElement) return
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 640 },
+            facingMode: "user",
+          },
+        })
+
+        videoElement.srcObject = stream
+
+        toast({
+          title: "Webcam Connected",
+          description: "Your webcam is now active for reactions",
+        })
+      } catch (err) {
+        console.error("Error accessing webcam:", err)
+        toast({
+          title: "Webcam Error",
+          description: "Could not access your webcam. Please check permissions.",
+          variant: "destructive",
+        })
+      }
+    }
+
+    // Initialize webcam with a slight delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initWebcam()
+    }, 1000)
+
+    // Cleanup function
+    return () => {
+      clearTimeout(timer)
+
+      // Stop webcam stream when component unmounts
+      const videoElement = document.getElementById("webcam")
+      if (videoElement && videoElement.srcObject) {
+        const tracks = videoElement.srcObject.getTracks()
+        tracks.forEach((track) => track.stop())
+      }
+    }
+  }, [toast])
 
   // Request a new video from the server
   const requestNewVideo = async () => {
@@ -591,8 +640,8 @@ export default function GamePage() {
         </div>
 
         {/* Main content with video */}
-        <div className="w-[400px] flex flex-col">
-          <div className="bg-white rounded-xl p-4 h-full flex flex-col">
+        <div className="flex-1 flex justify-center">
+          <div className="w-[400px] bg-white rounded-xl p-4 h-full flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-bold">Game Video</h3>
 
@@ -644,87 +693,46 @@ export default function GamePage() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Cute Progress Bar on the Right */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-80 hidden md:block">
-          <div className="relative w-full h-full">
-            {/* Background track */}
-            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 shadow-lg">
-              {/* Cute decorative elements */}
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-                <div className="w-4 h-4 bg-gradient-to-r from-pink-400 to-red-400 rounded-full flex items-center justify-center shadow-lg">
-                  <Heart className="w-2 h-2 text-white" />
-                </div>
-              </div>
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-                <div className="w-4 h-4 bg-gradient-to-r from-red-400 to-pink-400 rounded-full flex items-center justify-center shadow-lg">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                </div>
-              </div>
-            </div>
+      {/* Circular Webcam with Vertical Progress Meter - Bottom Right */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <div className="relative flex flex-col items-center">
+          {/* Vertical Progress Bar extending upward from webcam */}
+          <div className="relative w-4 h-32 mb-2">
+            {/* Empty bar background */}
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30"></div>
 
-            {/* Progress fill */}
+            {/* Colored fill bar */}
             <div
-              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-red-500 via-pink-500 to-red-400 rounded-full transition-all duration-1000 ease-out shadow-inner"
-              style={{ height: `${gameProgress}%` }}
-            >
-              {/* Animated shimmer effect */}
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent rounded-full animate-pulse"></div>
+              className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-300 ease-out"
+              style={{
+                height: `${gameProgress}%`,
+                background: `linear-gradient(to top, #22c55e, #eab308, #ef4444)`,
+              }}
+            ></div>
 
-              {/* Cute sparkles */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2">
-                <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
+            {/* Progress percentage indicator */}
+            <div className="absolute -right-8 top-1/2 -translate-y-1/2">
+              <div className="bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1">
+                <span className="text-white font-bold text-xs">{Math.round(gameProgress)}%</span>
               </div>
-              <div className="absolute top-8 left-1/4">
-                <div
-                  className="w-0.5 h-0.5 bg-white/80 rounded-full animate-pulse"
-                  style={{ animationDelay: "0.5s" }}
-                ></div>
-              </div>
-              <div className="absolute top-12 right-1/4">
-                <div
-                  className="w-0.5 h-0.5 bg-white/80 rounded-full animate-pulse"
-                  style={{ animationDelay: "1s" }}
-                ></div>
-              </div>
-            </div>
-
-            {/* Progress percentage display */}
-            <div className="absolute -right-12 top-1/2 -translate-y-1/2">
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 shadow-lg border border-white/30">
-                <span className="text-xs font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                  {Math.round(gameProgress)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Cute floating hearts animation */}
-            <div
-              className="absolute -left-6 top-1/4 animate-bounce"
-              style={{ animationDelay: "0s", animationDuration: "3s" }}
-            >
-              <Heart className="w-3 h-3 text-pink-300/60" />
-            </div>
-            <div
-              className="absolute -left-4 top-3/4 animate-bounce"
-              style={{ animationDelay: "1s", animationDuration: "2.5s" }}
-            >
-              <Heart className="w-2 h-2 text-red-300/60" />
-            </div>
-            <div
-              className="absolute -left-8 top-1/2 animate-bounce"
-              style={{ animationDelay: "2s", animationDuration: "3.5s" }}
-            >
-              <Heart className="w-2.5 h-2.5 text-pink-400/60" />
             </div>
           </div>
 
-          {/* Progress label */}
-          <div className="mt-4 text-center">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-white/30">
-              <span className="text-xs font-semibold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                Game Progress
-              </span>
+          {/* Circular webcam container */}
+          <div className="relative">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white/30 shadow-xl">
+              {/* Webcam video element */}
+              <video id="webcam" className="absolute w-full h-full object-cover" autoPlay playsInline muted></video>
+            </div>
+
+            {/* Webcam status indicator */}
+            <div className="absolute top-1 right-1 z-10">
+              <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-1.5 py-0.5">
+                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-white text-xs font-medium">LIVE</span>
+              </div>
             </div>
           </div>
         </div>
