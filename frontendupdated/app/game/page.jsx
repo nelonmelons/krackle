@@ -203,12 +203,7 @@ export default function GamePage() {
 
     // Calculate responsive width constraints
     const getResponsiveWidth = () => {
-      const screenWidth = window.innerWidth
-      if (screenWidth < 480) return "280px" // Mobile phones
-      if (screenWidth < 768) return "320px" // Large phones/small tablets
-      if (screenWidth < 1024) return "360px" // Tablets
-      if (screenWidth < 1440) return "400px" // Small desktops
-      return "440px" // Large desktops
+      return "20%" // Exactly 20% of screen width
     }
 
     // Extract video ID and determine video type
@@ -217,16 +212,14 @@ export default function GamePage() {
     if (videoId) {
       // Create YouTube iframe with strict constraints
       const videoWrapper = document.createElement("div")
-      videoWrapper.className = "relative w-full h-full flex items-center justify-center p-4"
+      videoWrapper.className = "relative w-full h-full flex items-center justify-center"
 
-      // Create constrained container with responsive width
+      // Create constrained container with fixed 20% width
       const constrainedContainer = document.createElement("div")
-      constrainedContainer.style.width = getResponsiveWidth()
-      constrainedContainer.style.maxWidth = "440px"
-      constrainedContainer.style.minWidth = "280px"
+      constrainedContainer.style.width = "20%"
       constrainedContainer.style.height = "100%"
       constrainedContainer.style.maxHeight = "calc(100vh - 200px)"
-      constrainedContainer.className = "relative"
+      constrainedContainer.className = "relative mx-auto" // Center it horizontally
 
       // Create glassmorphism frame around video
       const videoFrame = document.createElement("div")
@@ -286,10 +279,10 @@ export default function GamePage() {
       `
 
       // Add responsive resize handler
-      const handleResize = () => {
-        constrainedContainer.style.width = getResponsiveWidth()
-      }
-      window.addEventListener("resize", handleResize)
+      // const handleResize = () => {
+      //   constrainedContainer.style.width = getResponsiveWidth()
+      // }
+      // window.addEventListener("resize", handleResize)
 
       // Handle iframe load event
       iframe.onload = () => {
@@ -358,7 +351,7 @@ export default function GamePage() {
 
       // Cleanup function
       const cleanup = () => {
-        window.removeEventListener("resize", handleResize)
+        // window.removeEventListener("resize", handleResize)
       }
 
       // Store cleanup function for later use
@@ -366,15 +359,13 @@ export default function GamePage() {
     } else {
       // Handle direct video URLs with strict control
       const videoWrapper = document.createElement("div")
-      videoWrapper.className = "relative w-full h-full flex items-center justify-center p-4"
+      videoWrapper.className = "relative w-full h-full flex items-center justify-center"
 
       const constrainedContainer = document.createElement("div")
-      constrainedContainer.style.width = getResponsiveWidth()
-      constrainedContainer.style.maxWidth = "440px"
-      constrainedContainer.style.minWidth = "280px"
+      constrainedContainer.style.width = "20%"
       constrainedContainer.style.height = "100%"
       constrainedContainer.style.maxHeight = "calc(100vh - 200px)"
-      constrainedContainer.className = "relative"
+      constrainedContainer.className = "relative mx-auto" // Center it horizontally
 
       const videoFrame = document.createElement("div")
       videoFrame.className =
@@ -424,10 +415,10 @@ export default function GamePage() {
         video.play() // Force play if paused
       })
 
-      const handleResize = () => {
-        constrainedContainer.style.width = getResponsiveWidth()
-      }
-      window.addEventListener("resize", handleResize)
+      // const handleResize = () => {
+      //   constrainedContainer.style.width = getResponsiveWidth()
+      // }
+      // window.addEventListener("resize", handleResize)
 
       video.onloadeddata = () => {
         loadingOverlay.style.opacity = "0"
@@ -457,7 +448,7 @@ export default function GamePage() {
 
       // Cleanup function
       const cleanup = () => {
-        window.removeEventListener("resize", handleResize)
+        // window.removeEventListener("resize", handleResize)
         video.removeEventListener("click", preventInteraction)
         video.removeEventListener("dblclick", preventInteraction)
         video.removeEventListener("contextmenu", preventInteraction)
