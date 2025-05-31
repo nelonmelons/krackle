@@ -10,7 +10,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
   const [players, setPlayers] = useState([])
   const [lobbyInfo, setLobbyInfo] = useState({})
   const [connectionError, setConnectionError] = useState(null)
-  const [verified_username, setVerifiedUsername] = useState(null)
+  const [verified_usernames, setVerifiedUsername] = useState(null)
   
   const [data, setData] = useState({})
   const socketRef = useRef(null)
@@ -194,16 +194,16 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           break
 
         case 'player_verified':
-          setVerifiedUsername(data.verified_username || data.username)
+          setVerifiedUsername(data.verified_usernames || data.username)
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'system',
-            message: `${data.verified_username} has been verified via ${data.verification_method || 'face detection'}`,
+            message: `${data.verified_usernames} has been verified via ${data.verification_method || 'face detection'}`,
             timestamp: new Date()
           }])
           toast({
             title: "Player Verified",
-            description: `${data.verified_username} has been verified`,
+            description: `${data.verified_usernames} has been verified`,
           })
           break
 
@@ -306,7 +306,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     }
   }, [connect, disconnect])
   return {
-    verified_username,
+    verified_usernames,
     isConnected,
     messages,
     players,

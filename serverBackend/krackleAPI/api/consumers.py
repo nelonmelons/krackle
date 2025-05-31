@@ -483,7 +483,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         await self.send_private_message("success", "Profile picture uploaded successfully!")
         # Broadcast verification update to all players
         await self.broadcast_lobby_update("player_verified", {
-            'verified_username': self.username,
+            'verified_usernames': lobby_info['verified_players']
         })
 
     async def handle_face_detection_admin_settings(self, payload):

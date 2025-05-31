@@ -37,7 +37,7 @@ export default function LobbyPage() {
   const messagesEndRef = useRef(null)
   // Get WebSocket connection
   const {
-    verified_usernames, // <-- update useWebSocket to return this as an array!
+    verified_usernames,
     isConnected,
     messages,
     players,
