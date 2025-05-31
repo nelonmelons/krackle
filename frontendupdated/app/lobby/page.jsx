@@ -597,12 +597,11 @@ export default function LobbyPage() {
   // Handle game_started event and redirect to game page
   useEffect(() => {
     console.log("WebSocket data received (Game_started):", game_started)
-    if (game_started) {
-      console.log("Game started event received:", data)
-
+    if (game_started && verified_usernames && verified_usernames.includes(username)) {
+      console.log("Game started event received for verified user:", data)
       // Redirect to game page after a short delay
       setTimeout(() => {
-        router.push("/game")
+      router.push("/game")
       }, 1500)
     }
   }, [data, router, toast])
