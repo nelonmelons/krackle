@@ -45,8 +45,11 @@ def create_lobby(request):
             "player_images": {}, # Mapping of username to image filename
             "game_state": {},
             "connected_users": {}, # For WebSocket connected users
-            "issued_player_tokens": {admin_token: username}
+            "issued_player_tokens": {admin_token: username},
+            "laugh_meters": {}, # {Player1Name: Player1LaughMeterValue, Player2Name: Player2LaughMeterValue, ...}
         }
+
+        # in setting, we add a laught increment which is the increment value for the laugh meter
 
         return JsonResponse({
             "message": f"Lobby '{lobby_name}' created successfully.",

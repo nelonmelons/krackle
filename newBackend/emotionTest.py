@@ -58,7 +58,7 @@ emotion_history: list[float] = []
 frame_rate: int | float = 5
 
 # Load pre-trained weights
-model.load_weights('newBackend/model.h5')
+model.load_weights('model.h5')
 
 # Function to predict emotion
 def predict_emotion(frame: np.ndarray) -> list:
@@ -70,7 +70,7 @@ def predict_emotion(frame: np.ndarray) -> list:
     :return: A list of predictions for each detected face in the frame.
     :rtype: list
     """
-    facecasc = cv2.CascadeClassifier('newBackend/haarcascade_frontalface_default.xml')
+    facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
     preds = []
@@ -106,7 +106,11 @@ if __name__ == '__main__':
     n: int | float = 3
     # grace period for the client to be happy or surprised to adjust to the game
     happySurpriseLast: list[float] = list()
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
+    ret, frame = cap.read()
+    if not ret or np.mean(frame) < 5:  # Check if frame is all black or nearly black
+        cap.release()
+        cap = cv2.VideoCapture(0)
     # 7 emotions: angry, disgusted, fearful, happy, neutral, sad, surprised
     emojis = ["😠", "🤢", "😨", "😄", "😐", "😢", "😲"]
     GamePhase = "Adjust"
