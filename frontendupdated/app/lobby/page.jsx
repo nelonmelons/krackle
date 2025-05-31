@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { useWebSocket } from "@/hooks/use-websocket"
-import { Users, Play, LogOut, Copy, Check, Send, Settings, UserX, VolumeX, Volume2, Crown, Shield } from "lucide-react"
-
+import { Users, Play, LogOut, Copy, Check, Send, Settings, UserX, VolumeX, Crown, Shield } from "lucide-react"
 
 export default function LobbyPage() {
   const [username, setUsername] = useState("")
@@ -19,7 +18,7 @@ export default function LobbyPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [maxPlayers, setMaxPlayers] = useState(8)
   const [rounds, setRounds] = useState(5)
-  const [textDisabled, setTextDisabled] = useState(false)  // Face detection state
+  const [textDisabled, setTextDisabled] = useState(false) // Face detection state
   const [faceDetectionLoaded, setFaceDetectionLoaded] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
   const [detectionActive, setDetectionActive] = useState(false)
@@ -30,7 +29,7 @@ export default function LobbyPage() {
   const [lastFaceDetectedTime, setLastFaceDetectedTime] = useState(null)
   const [faceDetectionMessage, setFaceDetectionMessage] = useState("Position your face in the camera view")
   const [faceDetectionConfidence, setFaceDetectionConfidence] = useState(0)
-  
+
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -55,24 +54,26 @@ export default function LobbyPage() {
     sendMessage, // We'll use this for face detection data and image upload
   } = useWebSocket(lobbyCode, username, userToken, role)
 
-  
   // Handle image upload
-  const handleImageUploaded = useCallback((base64Data) => {
-    if (isConnected && sendMessage) {
-      sendMessage('upload_image', { image_data: base64Data })
-      toast({
-        title: "Image Sent",
-        description: "Face image has been sent for verification",
-      })
-      // Mark face verification as complete and close modal
-      setFaceVerificationComplete(true)
-      setShowFaceVerificationModal(false)
-      // Stop camera after successful capture
-      if (window.stopCamera) {
-        window.stopCamera()
+  const handleImageUploaded = useCallback(
+    (base64Data) => {
+      if (isConnected && sendMessage) {
+        sendMessage("upload_image", { image_data: base64Data })
+        toast({
+          title: "Image Sent",
+          description: "Face image has been sent for verification",
+        })
+        // Mark face verification as complete and close modal
+        setFaceVerificationComplete(true)
+        setShowFaceVerificationModal(false)
+        // Stop camera after successful capture
+        if (window.stopCamera) {
+          window.stopCamera()
+        }
       }
-    }
-  }, [isConnected, sendMessage, toast])
+    },
+    [isConnected, sendMessage, toast],
+  )
   useEffect(() => {
     // Get data from localStorage and URL params
     const storedUsername = localStorage.getItem("krackle_username")
@@ -90,13 +91,14 @@ export default function LobbyPage() {
       })
       router.push("/")
       return
-    }    setUsername(storedUsername)
+    }
+    setUsername(storedUsername)
     setLobbyCode(storedLobby || urlLobbyCode)
-    
+
     // Map "admin" to "lobby-admin" for WebSocket connection
     const websocketRole = storedRole === "admin" ? "lobby-admin" : storedRole || "player"
     setRole(websocketRole)
-    
+
     // Determine token based on role
     if (storedRole === "admin") {
       setUserToken(storedAdminToken)
@@ -122,7 +124,7 @@ export default function LobbyPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (isConnected) {
-        console.log("Current players in lobby:", players.map(p => p.username).join(", "))
+        console.log("Current players in lobby:", players.map((p) => p.username).join(", "))
       }
     }, 5000)
     return () => clearInterval(interval)
@@ -138,8 +140,8 @@ export default function LobbyPage() {
           return
         }
 
-        const script = document.createElement('script')
-        script.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js'
+        const script = document.createElement("script")
+        script.src = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"
         script.onload = resolve
         script.onerror = reject
         document.head.appendChild(script)
@@ -165,10 +167,10 @@ export default function LobbyPage() {
       }
 
       // Load face detection models function
-      window.loadFaceDetectionModels = async function() {
+      window.loadFaceDetectionModels = async () => {
         try {
           console.log("Loading face detection models...")
-          await window.faceapi.nets.tinyFaceDetector.loadFromUri('/models')
+          await window.faceapi.nets.tinyFaceDetector.loadFromUri("/models")
           window.modelsLoaded = true
           console.log("Face detection models loaded successfully!")
           return true
@@ -181,12 +183,12 @@ export default function LobbyPage() {
           })
           return false
         }
-      }      // Start camera function
-      window.startCamera = async function() {
+      } // Start camera function
+      window.startCamera = async () => {
         try {
           console.log("Starting camera...")
           setFaceDetectionMessage("Starting camera...")
-          
+
           const constraints = {
             video: {
               width: { ideal: 640 },
@@ -216,7 +218,7 @@ export default function LobbyPage() {
               console.log("Video playback started!")
               setCameraActive(true)
               setFaceDetectionMessage("Camera active. Click 'Start Detection' to begin face scanning.")
-              
+
               window.canvasElement.width = window.videoElement.videoWidth || 640
               window.canvasElement.height = window.videoElement.videoHeight || 480
 
@@ -252,9 +254,9 @@ export default function LobbyPage() {
       }
 
       // Stop camera function
-      window.stopCamera = function() {
+      window.stopCamera = () => {
         if (window.cameraStream) {
-          window.cameraStream.getTracks().forEach(track => track.stop())
+          window.cameraStream.getTracks().forEach((track) => track.stop())
           window.cameraStream = null
         }
 
@@ -272,8 +274,8 @@ export default function LobbyPage() {
         }
 
         console.log("Camera stopped")
-      }      // Start face detection function
-      window.startFaceDetection = function() {
+      } // Start face detection function
+      window.startFaceDetection = () => {
         if (window.isDetecting) return
 
         if (!window.modelsLoaded) {
@@ -296,7 +298,7 @@ export default function LobbyPage() {
 
         window.canvasElement.width = window.videoElement.videoWidth
         window.canvasElement.height = window.videoElement.videoHeight
-        
+
         window.videoElement.style.display = "none"
         window.canvasElement.style.display = "block"
 
@@ -308,8 +310,8 @@ export default function LobbyPage() {
         window.faceDetectionInterval = setInterval(async () => {
           await window.detectFaces()
         }, 500) // Increased frequency for better responsiveness
-      }      // Stop face detection function
-      window.stopFaceDetection = function() {
+      } // Stop face detection function
+      window.stopFaceDetection = () => {
         if (window.faceDetectionInterval) {
           clearInterval(window.faceDetectionInterval)
           window.faceDetectionInterval = null
@@ -321,7 +323,7 @@ export default function LobbyPage() {
         setFaceCount(0)
         setFaceDetectionConfidence(0)
         setFaceDetectionMessage("Face detection stopped")
-        
+
         if (window.videoElement && window.canvasElement) {
           window.videoElement.style.display = "block"
           window.canvasElement.style.display = "none"
@@ -332,8 +334,8 @@ export default function LobbyPage() {
 
       // Initialize frame counters for reduced logging
       window.detectionFrameCount = 0
-      window.noFaceFrameCount = 0      // Detect faces function
-      window.detectFaces = async function() {
+      window.noFaceFrameCount = 0 // Detect faces function
+      window.detectFaces = async () => {
         if (!window.isDetecting || !window.videoElement || window.videoElement.paused) return
 
         try {
@@ -346,14 +348,20 @@ export default function LobbyPage() {
 
           // Clear canvas and redraw
           window.canvasContext.clearRect(0, 0, window.canvasElement.width, window.canvasElement.height)
-          window.canvasContext.drawImage(window.videoElement, 0, 0, window.canvasElement.width, window.canvasElement.height)
+          window.canvasContext.drawImage(
+            window.videoElement,
+            0,
+            0,
+            window.canvasElement.width,
+            window.canvasElement.height,
+          )
 
           if (detections && detections.length > 0) {
             const displaySize = { width: window.canvasElement.width, height: window.canvasElement.height }
             const resizedDetections = window.faceapi.resizeResults(detections, displaySize)
 
             let highestConfidence = 0
-            resizedDetections.forEach(detection => {
+            resizedDetections.forEach((detection) => {
               const box = detection.detection ? detection.detection.box : detection.box
               const score = detection.detection ? detection.detection.score : detection.score
 
@@ -404,13 +412,13 @@ export default function LobbyPage() {
             setFaceDetected(false)
             setFaceCount(0)
             setFaceDetectionConfidence(0)
-            
+
             // Provide guidance based on how long no face has been detected
             window.noFaceFrameCount++
             if (window.noFaceFrameCount > 5) {
               setFaceDetectionMessage("No face detected. Please position your face in the camera view.")
             }
-            
+
             // Only log "no faces" occasionally
             if (window.noFaceFrameCount % 20 === 0) {
               console.log("No faces detected")
@@ -421,8 +429,8 @@ export default function LobbyPage() {
           console.error("Face detection error:", error)
           setFaceDetectionMessage("Face detection error. Please restart camera.")
         }
-      }// Send face image function
-      window.sendFaceImage = async function() {
+      } // Send face image function
+      window.sendFaceImage = async () => {
         if (!isConnected) {
           toast({
             title: "Connection Error",
@@ -508,18 +516,13 @@ export default function LobbyPage() {
           tempCanvas.width = cropWidth
           tempCanvas.height = cropHeight
 
-          tempContext.drawImage(
-            window.videoElement,
-            cropX, cropY, cropWidth, cropHeight,
-            0, 0, cropWidth, cropHeight
-          )
+          tempContext.drawImage(window.videoElement, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
 
           const imageDataUrl = tempCanvas.toDataURL("image/jpeg", 0.8)
           const base64Data = imageDataUrl.split(",")[1]
 
           // Call the existing handleImageUploaded callback
           handleImageUploaded(base64Data)
-
         } catch (error) {
           console.error("Failed to crop and send face:", error)
           toast({
@@ -535,11 +538,12 @@ export default function LobbyPage() {
       .then(() => {
         console.log("face-api.js loaded successfully")
         setFaceDetectionLoaded(true)
-        initializeFaceDetection()      })
-      .catch(error => {
+        initializeFaceDetection()
+      })
+      .catch((error) => {
         console.error("Failed to load face-api.js:", error)
         toast({
-          title: "Face Detection Error", 
+          title: "Face Detection Error",
           description: "Failed to load face detection library",
           variant: "destructive",
         })
@@ -559,7 +563,9 @@ export default function LobbyPage() {
     const timeoutDuration = 15000 // 15 seconds
     const timeout = setTimeout(() => {
       if (detectionActive && !faceDetected) {
-        setFaceDetectionMessage("Having trouble detecting your face? Try adjusting lighting or moving closer to the camera.")
+        setFaceDetectionMessage(
+          "Having trouble detecting your face? Try adjusting lighting or moving closer to the camera.",
+        )
         toast({
           title: "Face Detection Help",
           description: "Make sure you're in good lighting and facing the camera directly",
@@ -652,7 +658,7 @@ export default function LobbyPage() {
     if (maxPlayers !== lobbyInfo.maxPlayers) settings.max_players = maxPlayers
     if (rounds !== lobbyInfo.rounds) settings.rounds = rounds
     if (textDisabled !== lobbyInfo.textDisabled) settings.text_disabled = textDisabled
-    
+
     if (Object.keys(settings).length > 0) {
       changeSettings(settings)
     }
@@ -679,20 +685,23 @@ export default function LobbyPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Blurred Background */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-lg"></div>
-          
+
           {/* Modal Content */}
           <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 max-w-md w-full">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Face Verification Required</h2>
               <p className="text-gray-600">Please verify your identity to join the lobby</p>
-            </div>            {/* Status Indicators */}
+            </div>{" "}
+            {/* Status Indicators */}
             <div className="mb-4">
               {/* Model and Connection Status */}
               <div className="flex flex-wrap gap-2 justify-center mb-3">
-                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  faceDetectionLoaded ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {faceDetectionLoaded ? '✓ Models Loaded' : '⏳ Loading Models...'}
+                <div
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    faceDetectionLoaded ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {faceDetectionLoaded ? "✓ Models Loaded" : "⏳ Loading Models..."}
                 </div>
                 {cameraActive && (
                   <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -711,46 +720,65 @@ export default function LobbyPage() {
                 <div className="bg-gray-50 rounded-lg p-3 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Face Detection Status:</span>
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      faceDetected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {faceDetected ? `✓ ${faceCount} Face${faceCount !== 1 ? 's' : ''} Detected` : '✗ No Face Detected'}
+                    <div
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        faceDetected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {faceDetected
+                        ? `✓ ${faceCount} Face${faceCount !== 1 ? "s" : ""} Detected`
+                        : "✗ No Face Detected"}
                     </div>
                   </div>
-                  
+
                   {faceDetected && faceDetectionConfidence > 0 && (
                     <div className="mb-2">
                       <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                         <span>Confidence:</span>
-                        <span className={`font-medium ${
-                          faceDetectionConfidence > 70 ? 'text-green-600' : 
-                          faceDetectionConfidence > 50 ? 'text-yellow-600' : 'text-red-600'
-                        }`}>
+                        <span
+                          className={`font-medium ${
+                            faceDetectionConfidence > 70
+                              ? "text-green-600"
+                              : faceDetectionConfidence > 50
+                                ? "text-yellow-600"
+                                : "text-red-600"
+                          }`}
+                        >
                           {faceDetectionConfidence}%
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className={`h-2 rounded-full transition-all duration-300 ${
-                            faceDetectionConfidence > 70 ? 'bg-green-500' : 
-                            faceDetectionConfidence > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                            faceDetectionConfidence > 70
+                              ? "bg-green-500"
+                              : faceDetectionConfidence > 50
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
                           }`}
                           style={{ width: `${Math.min(faceDetectionConfidence, 100)}%` }}
                         ></div>
                       </div>
                     </div>
                   )}
-                  
-                  <p className={`text-sm ${
-                    faceDetected && faceCount === 1 && faceDetectionConfidence > 70 ? 'text-green-700' :
-                    faceDetected && faceCount > 1 ? 'text-orange-700' :
-                    faceDetected ? 'text-yellow-700' : 'text-red-700'
-                  }`}>
+
+                  <p
+                    className={`text-sm ${
+                      faceDetected && faceCount === 1 && faceDetectionConfidence > 70
+                        ? "text-green-700"
+                        : faceDetected && faceCount > 1
+                          ? "text-orange-700"
+                          : faceDetected
+                            ? "text-yellow-700"
+                            : "text-red-700"
+                    }`}
+                  >
                     {faceDetectionMessage}
                   </p>
                 </div>
               )}
-            </div>            {/* Circular Video/Canvas Container */}
+            </div>{" "}
+            {/* Circular Video/Canvas Container */}
             <div className="mb-6 flex justify-center">
               <div className="relative">
                 {/* Circular mask container */}
@@ -763,30 +791,32 @@ export default function LobbyPage() {
                     width="320"
                     height="320"
                     className="w-full h-full object-cover"
-                    style={{ transform: 'scaleX(-1)' }}
+                    style={{ transform: "scaleX(-1)" }}
                   />
                   <canvas
                     id="canvasElement"
                     width="320"
                     height="320"
                     className="w-full h-full object-cover absolute inset-0"
-                    style={{ transform: 'scaleX(-1)', display: 'none' }}
+                    style={{ transform: "scaleX(-1)", display: "none" }}
                   />
                 </div>
-                
+
                 {/* Dynamic overlay ring based on face detection status */}
-                <div className={`absolute inset-0 rounded-full border-4 transition-all duration-300 ${
-                  detectionActive ? (
-                    faceDetected && faceCount === 1 && faceDetectionConfidence > 70 ? 
-                      'border-green-400 opacity-80 animate-pulse' :
-                    faceDetected && faceCount === 1 ?
-                      'border-yellow-400 opacity-60 animate-pulse' :
-                    faceDetected && faceCount > 1 ?
-                      'border-orange-400 opacity-60 animate-pulse' :
-                      'border-red-400 opacity-60 animate-pulse'
-                  ) : 'border-purple-400 opacity-50 animate-pulse'
-                }`}></div>
-                
+                <div
+                  className={`absolute inset-0 rounded-full border-4 transition-all duration-300 ${
+                    detectionActive
+                      ? faceDetected && faceCount === 1 && faceDetectionConfidence > 70
+                        ? "border-green-400 opacity-80 animate-pulse"
+                        : faceDetected && faceCount === 1
+                          ? "border-yellow-400 opacity-60 animate-pulse"
+                          : faceDetected && faceCount > 1
+                            ? "border-orange-400 opacity-60 animate-pulse"
+                            : "border-red-400 opacity-60 animate-pulse"
+                      : "border-purple-400 opacity-50 animate-pulse"
+                  }`}
+                ></div>
+
                 {/* Camera status indicator */}
                 {!cameraActive && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/70 rounded-full">
@@ -797,13 +827,12 @@ export default function LobbyPage() {
                   </div>
                 )}
               </div>
-            </div>            {/* Instructions */}
+            </div>{" "}
+            {/* Instructions */}
             <div className="mb-6 text-center">
               {!cameraActive ? (
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Click "Start Camera" to begin face verification.
-                  </p>
+                  <p className="text-sm text-gray-600 mb-2">Click "Start Camera" to begin face verification.</p>
                   <p className="text-xs text-gray-500">
                     Make sure you're in a well-lit area and the only person visible.
                   </p>
@@ -813,29 +842,26 @@ export default function LobbyPage() {
                   <p className="text-sm text-gray-600 mb-2">
                     Camera is active. Click "Start Detection" to begin scanning for your face.
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Position your face in the center of the circular frame.
-                  </p>
+                  <p className="text-xs text-gray-500">Position your face in the center of the circular frame.</p>
                 </div>
               ) : (
                 <div>
                   <p className="text-sm text-gray-600 mb-2">
-                    {faceDetected && faceCount === 1 && faceDetectionConfidence > 70 ? 
-                      "Perfect! You can now capture and send your face." :
-                      "Follow the guidance above to improve face detection."
-                    }
+                    {faceDetected && faceCount === 1 && faceDetectionConfidence > 70
+                      ? "Perfect! You can now capture and send your face."
+                      : "Follow the guidance above to improve face detection."}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {faceDetected && faceCount === 1 ? 
-                      "Great positioning! Face detected successfully." :
-                      faceDetected && faceCount > 1 ? 
-                        "Multiple faces detected - please ensure only you are visible." :
-                        "Adjust your position until your face is clearly detected."
-                    }
+                    {faceDetected && faceCount === 1
+                      ? "Great positioning! Face detected successfully."
+                      : faceDetected && faceCount > 1
+                        ? "Multiple faces detected - please ensure only you are visible."
+                        : "Adjust your position until your face is clearly detected."}
                   </p>
                 </div>
               )}
-            </div>            {/* Controls */}
+            </div>{" "}
+            {/* Controls */}
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -843,7 +869,7 @@ export default function LobbyPage() {
                   disabled={!isConnected || cameraActive}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
                 >
-                  {cameraActive ? '✓ Camera On' : 'Start Camera'}
+                  {cameraActive ? "✓ Camera On" : "Start Camera"}
                 </button>
                 <button
                   onClick={() => window.stopCamera && window.stopCamera()}
@@ -862,7 +888,7 @@ export default function LobbyPage() {
                     disabled={!isConnected || !cameraActive || !faceDetectionLoaded || detectionActive}
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors text-sm"
                   >
-                    {detectionActive ? '🔍 Detecting...' : 'Start Detection'}
+                    {detectionActive ? "🔍 Detecting..." : "Start Detection"}
                   </button>
                   <button
                     onClick={() => window.stopFaceDetection && window.stopFaceDetection()}
@@ -876,19 +902,18 @@ export default function LobbyPage() {
 
               <button
                 onClick={() => window.sendFaceImage && window.sendFaceImage()}
-                disabled={!isConnected || !cameraActive || !faceDetectionLoaded || (!faceDetected || faceCount !== 1)}
+                disabled={!isConnected || !cameraActive || !faceDetectionLoaded || !faceDetected || faceCount !== 1}
                 className={`w-full px-4 py-3 font-bold transition-all duration-300 transform hover:scale-105 rounded-lg ${
-                  faceDetected && faceCount === 1 && faceDetectionConfidence > 50 ?
-                    'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white' :
-                    'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white'
+                  faceDetected && faceCount === 1 && faceDetectionConfidence > 50
+                    ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                    : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white"
                 }`}
               >
-                {faceDetected && faceCount === 1 ? 
-                  '✅ Capture & Send Face' : 
-                  faceDetected && faceCount > 1 ?
-                    '⚠️ Multiple Faces Detected' :
-                    '📸 Capture & Send Face'
-                }
+                {faceDetected && faceCount === 1
+                  ? "✅ Capture & Send Face"
+                  : faceDetected && faceCount > 1
+                    ? "⚠️ Multiple Faces Detected"
+                    : "📸 Capture & Send Face"}
               </button>
 
               {/* Skip button for testing (can be removed in production) */}
@@ -906,41 +931,12 @@ export default function LobbyPage() {
               </button>
             </div>
           </div>
-        </div>      )}
+        </div>
+      )}
 
       {/* Main Lobby Content - Only show after face verification */}
       {faceVerificationComplete && (
         <div className="max-w-6xl mx-auto">
-          {/* Admin Verified Players Display */}
-          {role === 'lobby-admin' && (
-            <div className="mb-8">
-              <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                Verified Players
-                <span className="text-green-600"><Check className="inline w-5 h-5" /></span>
-              </h3>
-              <div className="flex flex-wrap gap-4">
-                {players.map((player) => {
-                  const isVerified = verified_usernames?.includes(player)
-                  return (
-                    <div key={player} className="flex flex-col items-center">
-                      <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold
-                        ${isVerified ? 'border-4 border-green-500 relative' : 'border-2 border-gray-300'}
-                        bg-gradient-to-r from-purple-500 to-pink-500 text-white`}>
-                        {player.charAt(0).toUpperCase()}
-                        {isVerified && (
-                          <span className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-                            <Check className="w-4 h-4 text-white" />
-                          </span>
-                        )}
-                      </div>
-                      <span className="mt-1 text-sm text-gray-700">{player}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Header */}
           <div className="text-center my-8">
             <h1 className="text-white text-4xl md:text-5xl font-black tracking-tight drop-shadow-2xl">
@@ -959,19 +955,18 @@ export default function LobbyPage() {
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
-              {lobbyInfo.name && (
-                <span className="text-white/70 text-sm ml-2">({lobbyInfo.name})</span>
-              )}
+              {lobbyInfo.name && <span className="text-white/70 text-sm ml-2">({lobbyInfo.name})</span>}
             </div>
 
             {/* Connection Status */}
             <div className="mt-2 flex items-center justify-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`}></div>
-              <span className="text-white/70 text-sm">
-                {isConnected ? 'Connected' : 'Connecting...'}
-              </span>
+              <div
+                className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-400" : "bg-red-400"} animate-pulse`}
+              ></div>
+              <span className="text-white/70 text-sm">{isConnected ? "Connected" : "Connecting..."}</span>
             </div>
-          </div>        {/* Main Content */}
+          </div>{" "}
+          {/* Main Content */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Players Panel */}
             <div className="xl:col-span-1">
@@ -988,61 +983,79 @@ export default function LobbyPage() {
 
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {players.length > 0 ? (
-                      players.map((player, index) => (
-                        <div
-                          key={index}
-                          className={`p-3 rounded-xl flex items-center transition-all duration-300 ${
-                            player === username
-                              ? "bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300"
-                              : "bg-gray-50 hover:bg-gray-100"
-                          }`}
-                        >
+                      players.map((player, index) => {
+                        const isVerified =
+                          verified_usernames &&
+                          (Array.isArray(verified_usernames)
+                            ? verified_usernames.includes(player)
+                            : verified_usernames === player)
+
+                        return (
                           <div
-                            className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 font-bold text-white text-sm ${
+                            key={index}
+                            className={`p-3 rounded-xl flex items-center transition-all duration-300 ${
                               player === username
-                                ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                                : "bg-gradient-to-r from-gray-400 to-gray-500"
+                                ? "bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300"
+                                : "bg-gray-50 hover:bg-gray-100"
                             }`}
                           >
-                            {player.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-800 truncate">
-                                {player}
-                              </span>
-                              {index == 0 && <Crown className="w-4 h-4 text-yellow-500" />}
-                              {player === username && (
-                                <span className="text-xs text-purple-600 font-medium">(You)</span>
+                            <div
+                              className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 font-bold text-white text-sm relative ${
+                                player === username
+                                  ? "bg-gradient-to-r from-purple-500 to-pink-500"
+                                  : "bg-gradient-to-r from-gray-400 to-gray-500"
+                              }`}
+                            >
+                              {player.charAt(0).toUpperCase()}
+                              {/* Verification badge */}
+                              {isVerified && (
+                                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-white">
+                                  <Check className="w-2.5 h-2.5 text-white" />
+                                </div>
                               )}
                             </div>
-                          </div>
-                          
-                          {/* Admin Controls */}
-                          {role === 'lobby-admin' && player !== username && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 hover:bg-red-100"
-                                onClick={() => handleKickPlayer(player)}
-                                title="Kick player"
-                              >
-                                <UserX className="w-3 h-3 text-red-600" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 hover:bg-orange-100"
-                                onClick={() => handleMutePlayer(player)}
-                                title="Mute player"
-                              >
-                                <VolumeX className="w-3 h-3 text-orange-600" />
-                              </Button>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-800 truncate">{player}</span>
+                                {index == 0 && <Crown className="w-4 h-4 text-yellow-500" />}
+                                {player === username && (
+                                  <span className="text-xs text-purple-600 font-medium">(You)</span>
+                                )}
+                                {/* Verification text indicator */}
+                                {isVerified && (
+                                  <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
+                                    Verified
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ))
+
+                            {/* Admin Controls */}
+                            {role === "lobby-admin" && player !== username && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 hover:bg-red-100"
+                                  onClick={() => handleKickPlayer(player)}
+                                  title="Kick player"
+                                >
+                                  <UserX className="w-3 h-3 text-red-600" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 hover:bg-orange-100"
+                                  onClick={() => handleMutePlayer(player)}
+                                  title="Mute player"
+                                >
+                                  <VolumeX className="w-3 h-3 text-orange-600" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })
                     ) : (
                       <div className="text-center py-8">
                         <div className="text-4xl mb-3">👥</div>
@@ -1052,7 +1065,8 @@ export default function LobbyPage() {
                   </div>
                 </div>
               </div>
-            </div>          {/* Chat Panel */}
+            </div>{" "}
+            {/* Chat Panel */}
             <div className="xl:col-span-2">
               <div className="relative group h-[500px] flex flex-col">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
@@ -1060,7 +1074,7 @@ export default function LobbyPage() {
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-5 h-5 bg-green-400 rounded-full animate-pulse"></div>
                     <h3 className="text-xl font-bold text-gray-800">Live Chat</h3>
-                    {role === 'lobby-admin' && (
+                    {role === "lobby-admin" && (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -1079,25 +1093,19 @@ export default function LobbyPage() {
                         <div
                           key={msg.id}
                           className={`p-3 rounded-lg ${
-                            msg.type === 'chat'
+                            msg.type === "chat"
                               ? msg.sender === username
-                                ? 'bg-purple-100 ml-8'
-                                : 'bg-gray-100 mr-8'
-                              : 'bg-blue-50 text-center text-sm text-blue-700'
+                                ? "bg-purple-100 ml-8"
+                                : "bg-gray-100 mr-8"
+                              : "bg-blue-50 text-center text-sm text-blue-700"
                           }`}
                         >
-                          {msg.type === 'chat' ? (
+                          {msg.type === "chat" ? (
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-sm text-gray-800">
-                                  {msg.sender}
-                                </span>
-                                {msg.senderRole === 'lobby-admin' && (
-                                  <Crown className="w-3 h-3 text-yellow-500" />
-                                )}
-                                <span className="text-xs text-gray-500">
-                                  {msg.timestamp.toLocaleTimeString()}
-                                </span>
+                                <span className="font-semibold text-sm text-gray-800">{msg.sender}</span>
+                                {msg.senderRole === "lobby-admin" && <Crown className="w-3 h-3 text-yellow-500" />}
+                                <span className="text-xs text-gray-500">{msg.timestamp.toLocaleTimeString()}</span>
                               </div>
                               <p className="text-gray-700">{msg.message}</p>
                             </div>
@@ -1129,15 +1137,15 @@ export default function LobbyPage() {
                       className="bg-purple-600 hover:bg-purple-700"
                     >
                       <Send className="w-4 h-4" />
-                    </Button>                </form>
+                    </Button>{" "}
+                  </form>
                 </div>
               </div>
             </div>
           </div>
-
           {/* Action Buttons */}
           <div className="flex flex-wrap justify-center gap-4 mt-8 mb-8">
-            {role === 'lobby-admin' && (
+            {role === "lobby-admin" && (
               <>
                 <Button
                   onClick={handleStartGame}
@@ -1163,7 +1171,7 @@ export default function LobbyPage() {
                 </Button>
               </>
             )}
-            
+
             <Button
               onClick={handleLeaveGame}
               className="h-14 px-8 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform transition-all duration-300 hover:scale-105"
@@ -1172,13 +1180,12 @@ export default function LobbyPage() {
               LEAVE
             </Button>
           </div>
-
           {/* Settings Modal */}
-          {showSettings && role === 'lobby-admin' && (
+          {showSettings && role === "lobby-admin" && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-3xl p-6 w-full max-w-md">
                 <h3 className="text-xl font-bold mb-4">Lobby Settings</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Max Players (2-50)</label>
@@ -1187,10 +1194,10 @@ export default function LobbyPage() {
                       min="2"
                       max="50"
                       value={maxPlayers}
-                      onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+                      onChange={(e) => setMaxPlayers(Number.parseInt(e.target.value))}
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Rounds (1-10)</label>
                     <Input
@@ -1198,10 +1205,10 @@ export default function LobbyPage() {
                       min="1"
                       max="10"
                       value={rounds}
-                      onChange={(e) => setRounds(parseInt(e.target.value))}
+                      onChange={(e) => setRounds(Number.parseInt(e.target.value))}
                     />
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -1215,24 +1222,18 @@ export default function LobbyPage() {
                     </label>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2 mt-6">
-                  <Button
-                    onClick={handleSaveSettings}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700"
-                  >
+                  <Button onClick={handleSaveSettings} className="flex-1 bg-purple-600 hover:bg-purple-700">
                     Save Changes
                   </Button>
-                  <Button
-                    onClick={() => setShowSettings(false)}
-                    variant="outline"
-                    className="flex-1"
-                  >
+                  <Button onClick={() => setShowSettings(false)} variant="outline" className="flex-1">
                     Cancel
                   </Button>
                 </div>
               </div>
-            </div>        )}
+            </div>
+          )}
         </div>
       )}
     </div>
