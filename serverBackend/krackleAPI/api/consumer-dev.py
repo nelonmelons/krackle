@@ -471,8 +471,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         player_images[self.username] = filename
 
         await self.send_private_message("success", "Profile picture uploaded successfully!")
-        
-        # Broadcast verification update to all players
+          # Broadcast verification update to all players
         await self.broadcast_lobby_update("player_verified", {
             'verified_username': self.username,
             'total_verified': len(verified_players),
@@ -485,7 +484,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         detection_mode = payload.get('detection_mode', 'face')
         
         if not face_data:
-            await self.send_private_message("error", "No face detection data provided.")
             return
 
         lobby_info = lobbies_data.get(self.lobby_code)

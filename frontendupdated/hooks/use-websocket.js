@@ -173,8 +173,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           toast({
             title: "Lobby Disbanded",
             description: data.message,
-            variant: "destructive",
-          })
+            variant: "destructive",          })
           break
 
         case 'settings_changed':
@@ -187,6 +186,25 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           toast({
             title: "Settings Updated",
             description: data.message,
+          })
+          break
+
+        // Face detection events
+        case 'face_detection_update':
+          // Handle face detection updates from other players
+          console.log("Face detection update:", data)
+          break
+
+        case 'player_verified':
+          setMessages(prev => [...prev, {
+            id: Date.now(),
+            type: 'system',
+            message: `${data.verified_username} has been verified via ${data.verification_method || 'face detection'}`,
+            timestamp: new Date()
+          }])
+          toast({
+            title: "Player Verified",
+            description: `${data.verified_username} has been verified`,
           })
           break
 
@@ -288,7 +306,6 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
       disconnect()
     }
   }, [connect, disconnect])
-
   return {
     isConnected,
     messages,
@@ -304,6 +321,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     mutePlayer,
     unmutePlayer,
     changeSettings,
+    sendMessage, // Expose the general sendMessage function
     disconnect,
     reconnect: connect
   }

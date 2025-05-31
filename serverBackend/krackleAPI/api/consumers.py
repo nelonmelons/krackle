@@ -475,8 +475,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Broadcast verification update to all players
         await self.broadcast_lobby_update("player_verified", {
             'verified_username': self.username,
-            'total_verified': len(verified_players),
-            'total_players': len(lobby_info.get('players', []))
+            'total_verified': len(verified_players),        'total_players': len(lobby_info.get('players', []))
         })
 
     async def handle_face_detection_data(self, payload):
@@ -485,7 +484,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         detection_mode = payload.get('detection_mode', 'face')
 
         if not face_data:
-            await self.send_private_message("error", "No face detection data provided.")
             return
 
         lobby_info = lobbies_data.get(self.lobby_code)
