@@ -10,6 +10,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
   const [players, setPlayers] = useState([])
   const [lobbyInfo, setLobbyInfo] = useState({})
   const [connectionError, setConnectionError] = useState(null)
+  const [verified_username, setVerifiedUsername] = useState(null)
   
   const [data, setData] = useState({})
   const socketRef = useRef(null)
@@ -69,13 +70,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
         }
         
         // Auto-reconnect logic (unless it's an auth error)
-        if (event.code !== 4003 && event.code !== 4004 && event.code !== 4011) {
-          setTimeout(() => {
-            if (!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) {
-              connect()
-            }
-          }, 3000)
-        }
+      
       }
     } catch (error) {
       setConnectionError("Failed to create WebSocket connection")
@@ -199,6 +194,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           break
 
         case 'player_verified':
+          setVerifiedUsername(data.verified_username || data.username)
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'system',
@@ -310,6 +306,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     }
   }, [connect, disconnect])
   return {
+    verified_username,
     isConnected,
     messages,
     players,
