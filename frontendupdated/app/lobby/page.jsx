@@ -42,13 +42,13 @@ export default function LobbyPage() {
     unmutePlayer,
     changeSettings,
   } = useWebSocket(lobbyCode, username, userToken, role)
-
   useEffect(() => {
     // Get data from localStorage and URL params
     const storedUsername = localStorage.getItem("krackle_username")
     const storedLobby = localStorage.getItem("krackle_lobby")
     const storedToken = localStorage.getItem("krackle_user_token")
     const storedAdminToken = localStorage.getItem("krackle_admin_token")
+    const storedRole = localStorage.getItem("krackle_role")
     const urlLobbyCode = searchParams.get("lobby_code")
 
     if (!storedUsername || (!storedLobby && !urlLobbyCode)) {
@@ -59,17 +59,17 @@ export default function LobbyPage() {
       })
       router.push("/")
       return
-    }
-
-    setUsername(storedUsername)
+    }    setUsername(storedUsername)
     setLobbyCode(storedLobby || urlLobbyCode)
     
-    // Determine role and token
-    if (storedAdminToken) {
-      setRole("lobby-admin")
+    // Map "admin" to "lobby-admin" for WebSocket connection
+    const websocketRole = storedRole === "admin" ? "lobby-admin" : storedRole || "player"
+    setRole(websocketRole)
+    
+    // Determine token based on role
+    if (storedRole === "admin") {
       setUserToken(storedAdminToken)
-    } else if (storedToken) {
-      setRole("player")
+    } else if (storedRole === "player") {
       setUserToken(storedToken)
     } else {
       toast({
@@ -86,6 +86,16 @@ export default function LobbyPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // Log current players every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isConnected) {
+        console.log("Current players in lobby:", players.map(p => p.username).join(", "))
+      }
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [isConnected, players])
 
   const handleLeaveGame = () => {
     leaveLobby()

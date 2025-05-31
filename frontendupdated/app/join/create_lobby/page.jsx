@@ -17,7 +17,8 @@ export default function CreateLobbyPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
-
+  const [role, setRole] = useState("admin")
+  
   useEffect(() => {
     // Get the username from localStorage
     const storedUsername = localStorage.getItem("krackle_username")
@@ -80,8 +81,7 @@ export default function CreateLobbyPage() {
 
       const data = await response.json()
 
-      if (response.ok) {
-        // Store the lobby code and admin token
+      if (response.ok) {        // Store the lobby code and admin token
         localStorage.setItem("krackle_lobby", data.lobby_code || data.lobby_id)
         localStorage.setItem("krackle_admin_token", data.admin_token)
 
@@ -90,6 +90,8 @@ export default function CreateLobbyPage() {
           description: `Your lobby "${lobbyName}" has been created successfully`,
         })
 
+        localStorage.setItem("krackle_role", role)
+        
         // Redirect to the lobby page
         router.push("/lobby")
       } else {
