@@ -2,7 +2,13 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 from .views.share_data import lobbies_data  # Corrected import path
-from .utils.image_utils import save_player_image, delete_lobby_images
+from .utils.image_utils import save_player_image, delete_lobby_images, get_player_image_url
+import numpy as np
+import sys
+import os
+from .emotion import predict_emotion
+from django.conf import settings
+import cv2
 
 
 class LobbyConsumer(AsyncWebsocketConsumer):
@@ -145,9 +151,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         elif message_type == 'upload_image':
             await self.handle_upload_image(payload)
 
-        # Face detection data for verification
-        elif message_type == 'face_detection_data':
-            await self.handle_face_detection_data(payload)
 
         # Admin-only actions
         elif message_type in ['kick_player', 'start_game', 'close_lobby', 'disband_lobby', 'mute_player',
@@ -265,6 +268,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     async def handle_start_game(self, payload):
         """Handle admin starting the game"""
+        self.play_round = 1
+
         lobby_info = lobbies_data.get(self.lobby_code)
         if not lobby_info:
             return
@@ -282,8 +287,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         # Simple implementation - just broadcast game start with verified players
         lobby_info['game_state'] = {
-            'status': 'started',
-            'round': 1,
+            'status': 'playing',
+            'round': self.play_round,
             'verified_players': verified_players.copy()
         }
 
@@ -470,76 +475,15 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         player_images = lobby_info.setdefault('player_images', {})
         player_images[self.username] = filename
 
-        await self.send_private_message("success", "Profile picture uploaded successfully!")
+        # If the game is currently playing, run emotion prediction
+        game_state = lobby_info.get('game_state', {})
+        if game_state.get('status') == 'playing':
+            await self.handle_emotion_prediction()
 
+        await self.send_private_message("success", "Profile picture uploaded successfully!")
         # Broadcast verification update to all players
         await self.broadcast_lobby_update("player_verified", {
             'verified_username': self.username,
-            'total_verified': len(verified_players),        'total_players': len(lobby_info.get('players', []))
-        })
-
-    async def handle_face_detection_data(self, payload):
-        """Handle face detection data for verification"""
-        face_data = payload.get('face_data')
-        detection_mode = payload.get('detection_mode', 'face')
-
-        if not face_data:
-            return
-
-        lobby_info = lobbies_data.get(self.lobby_code)
-        if not lobby_info:
-            await self.send_private_message("error", "Lobby not found.")
-            return
-
-        # Initialize face detection storage in lobby
-        face_detection_data = lobby_info.setdefault('face_detection_data', {})
-        player_face_data = face_detection_data.setdefault(self.username, {
-            'last_detection': None,
-            'detection_count': 0,
-            'verification_status': 'pending'
-        })
-
-        # Update player's face detection data
-        player_face_data['last_detection'] = face_data
-        player_face_data['detection_count'] += 1
-        player_face_data['detection_mode'] = detection_mode
-
-        # Basic face verification logic - can be enhanced
-        faces_detected = face_data.get('faces_detected', 0)
-        if faces_detected == 1:  # Exactly one face detected
-            player_face_data['verification_status'] = 'verified'
-
-            # Add to verified players if face detection is successful
-            verified_players = lobby_info.setdefault('verified_players', [])
-            if self.username not in verified_players:
-                verified_players.append(self.username)
-
-                # Broadcast verification update
-                await self.broadcast_lobby_update("player_verified", {
-                    'verified_username': self.username,
-                    'verification_method': 'face_detection',
-                    'total_verified': len(verified_players),
-                    'total_players': len(lobby_info.get('players', []))
-                })
-
-            await self.send_private_message("success", "Face verification successful!")
-
-        elif faces_detected == 0:
-            player_face_data['verification_status'] = 'no_face'
-            await self.send_private_message("warning", "No face detected. Please ensure your face is visible.")
-
-        elif faces_detected > 1:
-            player_face_data['verification_status'] = 'multiple_faces'
-            await self.send_private_message("warning",
-                                            "Multiple faces detected. Please ensure only one person is visible.")
-
-        # Broadcast face detection stats to admin
-        await self.broadcast_lobby_update("face_detection_update", {
-            'username': self.username,
-            'faces_detected': faces_detected,
-            'detection_mode': detection_mode,
-            'verification_status': player_face_data['verification_status'],
-            'total_detections': player_face_data['detection_count']
         })
 
     async def handle_face_detection_admin_settings(self, payload):
@@ -570,40 +514,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Broadcast settings update to all players
         await self.broadcast_lobby_update("face_detection_settings_update", face_settings)
         await self.send_private_message("success", "Face detection settings updated!")
-
-    async def handle_get_face_detection_stats(self, payload):
-        """Get face detection statistics for admin"""
-        lobby_info = lobbies_data.get(self.lobby_code)
-        if not lobby_info:
-            await self.send_private_message("error", "Lobby not found.")
-            return
-
-        face_data = lobby_info.get('face_detection_data', {})
-        stats = {
-            'total_players': len(lobby_info.get('players', [])),
-            'players_with_detection': len(face_data),
-            'verified_via_face': 0,
-            'pending_verification': 0,
-            'failed_verification': 0,
-            'player_stats': {}
-        }
-
-        for username, data in face_data.items():
-            status = data.get('verification_status', 'pending')
-            stats['player_stats'][username] = {
-                'detection_count': data.get('detection_count', 0),
-                'verification_status': status,
-                'last_detection_mode': data.get('detection_mode', 'unknown')
-            }
-
-            if status == 'verified':
-                stats['verified_via_face'] += 1
-            elif status in ['no_face', 'multiple_faces']:
-                stats['failed_verification'] += 1
-            else:
-                stats['pending_verification'] += 1
-
-        await self.send_private_message("face_detection_stats", stats)
 
     async def send_private_message(self, message_type, message):
         """Send a private message to this user only"""
@@ -657,10 +567,34 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'lobby_name': lobby_info.get('name'),
                 'host': lobby_info.get('host_username'),
                 'players_in_lobby': lobby_info.get('players', []),
-                'valid_players':  lobby_info.get('verified_players', [])
             }
 
             if extra_data:
                 message_data.update(extra_data)
 
             await self.channel_layer.group_send(self.lobby_group_name, message_data)
+
+    async def handle_emotion_prediction(self):
+        """Handle emotion prediction using face data"""
+
+        # Dynamically import predict_emotion from newBackend/emotionTest.py
+        backend_path = os.path.join(os.path.dirname(__file__), '../../newBackend')
+        sys.path.append(os.path.abspath(backend_path))
+
+        face_url = get_player_image_url(self.lobby_code, self.username)  # Ensure player image URL is set)
+        # Read image from face_url using OpenCV and numpy
+        face = cv2.imread(face_url)
+        if face is None:
+            await self.send_private_message("error", "No face data provided for emotion prediction.")
+            return
+
+        try:
+            face_array = np.array(face)
+            result = predict_emotion(face_array)
+
+            lobbies_data[self.lobby_code]['laugh_meters'][self.username] += 0.1 if result in ['Happy',
+                                                                                              'Surprised'] else -0.005
+            return
+        except Exception as e:
+            await self.send_private_message("error", f"Emotion prediction failed: {e}")
+            return None

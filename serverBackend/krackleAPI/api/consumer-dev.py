@@ -492,69 +492,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             'total_players': len(lobby_info.get('players', []))
         })
 
-    async def handle_face_detection_data(self, payload):
-        """Handle face detection data for verification"""
-        face_data = payload.get('face_data')
-        detection_mode = payload.get('detection_mode', 'face')
-        
-        if not face_data:
-            return
-
-        lobby_info = lobbies_data.get(self.lobby_code)
-        if not lobby_info:
-            await self.send_private_message("error", "Lobby not found.")
-            return
-
-        # Initialize face detection storage in lobby
-        face_detection_data = lobby_info.setdefault('face_detection_data', {})
-        player_face_data = face_detection_data.setdefault(self.username, {
-            'last_detection': None,
-            'detection_count': 0,
-            'verification_status': 'pending'
-        })
-
-        # Update player's face detection data
-        player_face_data['last_detection'] = face_data
-        player_face_data['detection_count'] += 1
-        player_face_data['detection_mode'] = detection_mode
-
-        # Basic face verification logic - can be enhanced
-        faces_detected = face_data.get('faces_detected', 0)
-        if faces_detected == 1:  # Exactly one face detected
-            player_face_data['verification_status'] = 'verified'
-            
-            # Add to verified players if face detection is successful
-            verified_players = lobby_info.setdefault('verified_players', [])
-            if self.username not in verified_players:
-                verified_players.append(self.username)
-                
-                # Broadcast verification update
-                await self.broadcast_lobby_update("player_verified", {
-                    'verified_username': self.username,
-                    'verification_method': 'face_detection',
-                    'total_verified': len(verified_players),
-                    'total_players': len(lobby_info.get('players', []))
-                })
-                
-            await self.send_private_message("success", "Face verification successful!")
-        
-        elif faces_detected == 0:
-            player_face_data['verification_status'] = 'no_face'
-            await self.send_private_message("warning", "No face detected. Please ensure your face is visible.")
-        
-        elif faces_detected > 1:
-            player_face_data['verification_status'] = 'multiple_faces'
-            await self.send_private_message("warning", "Multiple faces detected. Please ensure only one person is visible.")
-
-        # Broadcast face detection stats to admin
-        await self.broadcast_lobby_update("face_detection_update", {
-            'username': self.username,
-            'faces_detected': faces_detected,
-            'detection_mode': detection_mode,
-            'verification_status': player_face_data['verification_status'],
-            'total_detections': player_face_data['detection_count']
-        })
-
     async def handle_face_detection_admin_settings(self, payload):
         """Handle admin face detection settings"""
         lobby_info = lobbies_data.get(self.lobby_code)
@@ -583,40 +520,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Broadcast settings update to all players
         await self.broadcast_lobby_update("face_detection_settings_update", face_settings)
         await self.send_private_message("success", "Face detection settings updated!")
-
-    async def handle_get_face_detection_stats(self, payload):
-        """Get face detection statistics for admin"""
-        lobby_info = lobbies_data.get(self.lobby_code)
-        if not lobby_info:
-            await self.send_private_message("error", "Lobby not found.")
-            return
-
-        face_data = lobby_info.get('face_detection_data', {})
-        stats = {
-            'total_players': len(lobby_info.get('players', [])),
-            'players_with_detection': len(face_data),
-            'verified_via_face': 0,
-            'pending_verification': 0,
-            'failed_verification': 0,
-            'player_stats': {}
-        }
-
-        for username, data in face_data.items():
-            status = data.get('verification_status', 'pending')
-            stats['player_stats'][username] = {
-                'detection_count': data.get('detection_count', 0),
-                'verification_status': status,
-                'last_detection_mode': data.get('detection_mode', 'unknown')
-            }
-            
-            if status == 'verified':
-                stats['verified_via_face'] += 1
-            elif status in ['no_face', 'multiple_faces']:
-                stats['failed_verification'] += 1
-            else:
-                stats['pending_verification'] += 1
-
-        await self.send_private_message("face_detection_stats", stats)
 
     async def send_private_message(self, message_type, message):
         """Send a private message to this user only"""
