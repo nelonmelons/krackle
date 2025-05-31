@@ -91,7 +91,7 @@ export default function LobbyPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (isConnected) {
-        console.log("Current players in lobby:", players.map(p => p.username).join(", "))
+        console.log("Current players in lobby:", players)
       }
     }, 5000)
     return () => clearInterval(interval)
@@ -241,40 +241,40 @@ export default function LobbyPage() {
                       <div
                         key={index}
                         className={`p-3 rounded-xl flex items-center transition-all duration-300 ${
-                          player.username === username
+                          player === username
                             ? "bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-300"
                             : "bg-gray-50 hover:bg-gray-100"
                         }`}
                       >
                         <div
                           className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 font-bold text-white text-sm ${
-                            player.username === username
+                            player === username
                               ? "bg-gradient-to-r from-purple-500 to-pink-500"
                               : "bg-gradient-to-r from-gray-400 to-gray-500"
                           }`}
                         >
-                          {player.username.charAt(0).toUpperCase()}
+                          {player.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-gray-800 truncate">
-                              {player.username}
+                              {player}
                             </span>
-                            {player.role === 'lobby-admin' && <Crown className="w-4 h-4 text-yellow-500" />}
-                            {player.username === username && (
+                            {index == 0 && <Crown className="w-4 h-4 text-yellow-500" />}
+                            {player === username && (
                               <span className="text-xs text-purple-600 font-medium">(You)</span>
                             )}
                           </div>
                         </div>
                         
                         {/* Admin Controls */}
-                        {role === 'lobby-admin' && player.username !== username && (
+                        {role === 'lobby-admin' && player !== username && (
                           <div className="flex gap-1">
                             <Button
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0 hover:bg-red-100"
-                              onClick={() => handleKickPlayer(player.username)}
+                              onClick={() => handleKickPlayer(player)}
                               title="Kick player"
                             >
                               <UserX className="w-3 h-3 text-red-600" />
@@ -283,7 +283,7 @@ export default function LobbyPage() {
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0 hover:bg-orange-100"
-                              onClick={() => handleMutePlayer(player.username)}
+                              onClick={() => handleMutePlayer(player)}
                               title="Mute player"
                             >
                               <VolumeX className="w-3 h-3 text-orange-600" />

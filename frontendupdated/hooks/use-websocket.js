@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useToast } from "@/hooks/use-toast"
+import { set } from 'date-fns'
 
 const WEBSOCKET_BASE_URL = "wss://cd6f-202-28-7-4.ngrok-free.app"
 
@@ -10,6 +11,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
   const [lobbyInfo, setLobbyInfo] = useState({})
   const [connectionError, setConnectionError] = useState(null)
   
+  const [data, setData] = useState({})
   const socketRef = useRef(null)
   const { toast } = useToast()
 
@@ -83,6 +85,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
 
   const handleMessage = (data) => {
     console.log("Received WebSocket message:", data)
+    setData(data)
 
     if (data.type === 'lobby.message') {
       // Handle different lobby events
@@ -98,8 +101,6 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           }])
           break
 
-        case 'user_connected':
-        case 'user_disconnected':
         case 'user_left':
           setPlayers(data.connected_players || [])
           setLobbyInfo({
@@ -118,11 +119,13 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           break
         
         case 'user_connected':
-          setPlayers(prev => [...prev, data.player])
+          console.log("User connected:", data.players_in_lobby)
+          setPlayers(data.players_in_lobby || [])
+          
           setMessages(prev => [...prev, {
             id: Date.now(),
             type: 'system',
-            message: `${data.player.username} entered the lobby`,
+            message: `${data.player} entered the lobby`,
             timestamp: new Date()
           }])
           break
@@ -288,6 +291,15 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
       disconnect()
     }
   }, [connect, disconnect])
+
+  // console.log(data.players_in_lobby)
+  // console.log("Lobby Info")
+  
+
+ // setPlayers(data.players_in_lobby || [])
+  // if (players == data.players_in_lobby) {
+  //   setPlayers(data.players_in_lobby || [])
+  // }
 
   return {
     isConnected,
