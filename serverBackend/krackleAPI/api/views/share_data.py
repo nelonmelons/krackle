@@ -27,8 +27,8 @@
 #         # "player_token_example": "username_associated_with_token"
 #     },
 #     "laugh_meters": { # Mapping of player usernames to their laugh meter values
-#         # "player1": 0,
-#         # "player2": 0,
+#         # "player1": 0.0,
+#         # "player2": 0.0,
 #         # ...
 #     }
 #   }

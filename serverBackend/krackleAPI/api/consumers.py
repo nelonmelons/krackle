@@ -6,8 +6,9 @@ from .utils.image_utils import save_player_image, delete_lobby_images, get_playe
 import numpy as np
 import sys
 import os
+
 from .emotion import predict_emotion
-from django.conf import settings
+from .shorts_links import urls
 import cv2
 
 
@@ -108,6 +109,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'channel_name': self.channel_name
             }
 
+            self.video_ind = 0
+
             # Optionally, remove token from issued_player_tokens once used, or keep for reconnections
             # For now, we keep it in issued_player_tokens.
 
@@ -155,7 +158,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         # Admin-only actions
         elif message_type in ['kick_player', 'start_game', 'close_lobby', 'disband_lobby', 'mute_player',
                               'unmute_player', 'change_settings', 'face_detection_admin_settings',
-                              'get_face_detection_stats']:
+                              'get_face_detection_stats', 'new_game_video']:
             if self.role == 'lobby-admin':
                 if message_type == 'kick_player':
                     await self.handle_kick_player(payload)
@@ -175,6 +178,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                     await self.handle_face_detection_admin_settings(payload)
                 elif message_type == 'get_face_detection_stats':
                     await self.handle_get_face_detection_stats(payload)
+                elif message_type == 'new_game_video':
+                    await self.handle_new_game_video(payload)
             else:
                 await self.send_private_message("error", "You don't have permission for this action.")
         else:
@@ -268,6 +273,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     async def handle_start_game(self, payload):
         """Handle admin starting the game"""
+        print(f"[LobbyConsumer] Starting game for lobby {self.lobby_code}")
+
         self.play_round = 1
 
         lobby_info = lobbies_data.get(self.lobby_code)
@@ -281,9 +288,15 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         unverified_players = [player for player in players if player not in verified_players]
 
         if unverified_players:
-            await self.send_private_message("error",
-                                            f"Cannot start game. The following players haven't submitted their photos: {', '.join(unverified_players)}")
+            await self.send_private_message(
+                "error",
+                f"Cannot start game. The following players haven't submitted their photos: {', '.join(unverified_players)}"
+            )
             return
+
+        # Initialize laugh meters for all verified players
+        laugh_meters = {user: 0.0 for user in verified_players}
+        lobby_info['laugh_meters'] = laugh_meters
 
         # Simple implementation - just broadcast game start with verified players
         lobby_info['game_state'] = {
@@ -299,7 +312,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'event': 'game_started',
                 'message': f'The game has started with {len(verified_players)} verified players!',
                 'started_by': self.username,
-                'verified_players': verified_players
+                'verified_players': verified_players,
+                'laugh_meters': laugh_meters
             }
         )
 
@@ -466,7 +480,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             await self.send_private_message("error", "Failed to save image. Please try again.")
             return
 
-        # Add player to verified list if not already there
         verified_players = lobby_info.setdefault('verified_players', [])
         if self.username not in verified_players:
             verified_players.append(self.username)
@@ -477,14 +490,16 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         # If the game is currently playing, run emotion prediction
         game_state = lobby_info.get('game_state', {})
+
         if game_state.get('status') == 'playing':
             await self.handle_emotion_prediction()
+        else:
+            await self.send_private_message("success", "Profile picture uploaded successfully!")
+            # Broadcast verification update to all players
+            await self.broadcast_lobby_update("player_verified", {
+                'verified_usernames': lobby_info['verified_players']
+            })
 
-        await self.send_private_message("success", "Profile picture uploaded successfully!")
-        # Broadcast verification update to all players
-        await self.broadcast_lobby_update("player_verified", {
-            'verified_usernames': lobby_info['verified_players']
-        })
 
     async def handle_face_detection_admin_settings(self, payload):
         """Handle admin face detection settings"""
@@ -591,10 +606,30 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         try:
             face_array = np.array(face)
             result = predict_emotion(face_array)
-
             lobbies_data[self.lobby_code]['laugh_meters'][self.username] += 0.1 if result in ['Happy',
                                                                                               'Surprised'] else -0.005
-            return
         except Exception as e:
             await self.send_private_message("error", f"Emotion prediction failed: {e}")
             return None
+
+    async def handle_new_game_video(self, payload):
+        """Handle new game video upload
+
+        It would return a url and incremetn self.video_ind
+        """
+        try:
+            url = urls[self.video_ind]
+            self.video_ind += 1
+            self.play_round += 1
+            if self.play_round > self.rounds:
+                await self.send_private_message("success", "Game over!")
+                # broadcast game over,
+                return None
+        except IndexError:
+            await self.send_private_message("error", "No more videos available.")
+            return None
+
+        await self.broadcast_lobby_update("game_video", {"url": url})
+        return None
+
+
