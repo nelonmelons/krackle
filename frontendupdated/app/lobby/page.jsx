@@ -54,12 +54,7 @@ export default function LobbyPage() {
     sendMessage, // We'll use this for face detection data and image upload
   } = useWebSocket(lobbyCode, username, userToken, role)
 
-  // Handle face detection data
-  const handleFaceDetected = useCallback((faceDetectionData) => {
-    if (isConnected && sendMessage) {
-      sendMessage('face_detection_data', faceDetectionData)
-    }
-  }, [isConnected, sendMessage])
+  
   // Handle image upload
   const handleImageUploaded = useCallback((base64Data) => {
     if (isConnected && sendMessage) {
@@ -397,16 +392,6 @@ export default function LobbyPage() {
               setFaceDetectionMessage("Multiple faces detected. Please ensure only one person is visible.")
             }
 
-            // Send face detection data via WebSocket (similar to handleFaceDetected)
-            const faceDetectionData = {
-              faceCount: detections.length,
-              confidence: highestConfidence,
-              timestamp: Date.now()
-            }
-            
-            // Call the existing handleFaceDetected callback
-            handleFaceDetected(faceDetectionData)
-
             // Only log occasionally to avoid spam
             window.detectionFrameCount++
             if (window.detectionFrameCount % 10 === 0) {
@@ -564,7 +549,7 @@ export default function LobbyPage() {
         window.stopCamera()
       }
     }
-  }, [handleFaceDetected, handleImageUploaded, isConnected, toast])
+  }, [handleImageUploaded, isConnected, toast])
 
   // Monitor face detection status and provide timeout guidance
   useEffect(() => {
