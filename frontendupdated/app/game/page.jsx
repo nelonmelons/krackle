@@ -173,7 +173,7 @@ export default function GamePage() {
     return match && match[2].length === 11 ? match[2] : null
   }
 
-  // Load video from URL with aesthetic integration
+  // Enhanced load video function with strict constraints and interaction control
   const load_video_from_url = (video_url) => {
     if (!video_url || !videoContainerRef.current) {
       console.warn("No video URL provided or container not found")
@@ -189,73 +189,107 @@ export default function GamePage() {
     loadingOverlay.className =
       "absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm z-10 transition-opacity duration-500"
     loadingOverlay.innerHTML = `
-    <div class="text-center">
-      <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-      <p class="text-white text-lg font-medium">Loading video...</p>
-      <div class="mt-2 flex justify-center space-x-1">
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+      <div class="text-center">
+        <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-white text-lg font-medium">Loading video...</p>
+        <div class="mt-2 flex justify-center space-x-1">
+          <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+          <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+          <div class="w-2 h-2 bg-white/60 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+        </div>
       </div>
-    </div>
-  `
+    `
     container.appendChild(loadingOverlay)
+
+    // Calculate responsive width constraints
+    const getResponsiveWidth = () => {
+      const screenWidth = window.innerWidth
+      if (screenWidth < 480) return "280px" // Mobile phones
+      if (screenWidth < 768) return "320px" // Large phones/small tablets
+      if (screenWidth < 1024) return "360px" // Tablets
+      if (screenWidth < 1440) return "400px" // Small desktops
+      return "440px" // Large desktops
+    }
 
     // Extract video ID and determine video type
     const videoId = getYouTubeVideoId(video_url)
 
     if (videoId) {
-      // Create YouTube iframe with aesthetic wrapper
+      // Create YouTube iframe with strict constraints
       const videoWrapper = document.createElement("div")
-      videoWrapper.className = "relative w-full h-full flex items-center justify-center"
+      videoWrapper.className = "relative w-full h-full flex items-center justify-center p-4"
+
+      // Create constrained container with responsive width
+      const constrainedContainer = document.createElement("div")
+      constrainedContainer.style.width = getResponsiveWidth()
+      constrainedContainer.style.maxWidth = "440px"
+      constrainedContainer.style.minWidth = "280px"
+      constrainedContainer.style.height = "100%"
+      constrainedContainer.style.maxHeight = "calc(100vh - 200px)"
+      constrainedContainer.className = "relative"
 
       // Create glassmorphism frame around video
       const videoFrame = document.createElement("div")
       videoFrame.className =
-        "relative w-full max-w-md h-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+        "relative w-full h-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
 
       // Add decorative gradient border
       const gradientBorder = document.createElement("div")
       gradientBorder.className =
         "absolute inset-0 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-blue-500/30 rounded-2xl"
 
-      // Inner container for video
+      // Inner container for video with padding
       const innerContainer = document.createElement("div")
       innerContainer.className = "relative w-full h-full m-1 bg-black rounded-xl overflow-hidden"
 
-      // Create iframe
+      // Create iframe with interaction blocking
       const iframe = document.createElement("iframe")
       iframe.className = "absolute inset-0 w-full h-full"
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&disablekb=0&fs=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&enablejsapi=1`
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&enablejsapi=1&playsinline=1&mute=0`
       iframe.title = "Game Video Player"
       iframe.frameBorder = "0"
-      iframe.allow =
-        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      iframe.allowFullscreen = true
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      iframe.allowFullscreen = false // Disable fullscreen
+      iframe.style.pointerEvents = "none" // Disable all interactions
+
+      // Create invisible overlay to block all user interactions
+      const interactionBlocker = document.createElement("div")
+      interactionBlocker.className = "absolute inset-0 z-30 cursor-not-allowed"
+      interactionBlocker.style.backgroundColor = "transparent"
+      interactionBlocker.title = "Video controls are disabled during gameplay"
 
       // Add floating video info overlay
       const videoInfo = document.createElement("div")
       videoInfo.className =
         "absolute top-4 left-4 right-4 bg-black/50 backdrop-blur-md rounded-lg p-3 text-white text-sm font-medium opacity-0 hover:opacity-100 transition-opacity duration-300 z-20"
       videoInfo.innerHTML = `
-      <div class="flex items-center justify-between">
-        <span class="flex items-center gap-2">
-          <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-          Now Playing
-        </span>
-        <span class="text-xs text-white/70">Lobby: ${lobbyCode}</span>
-      </div>
-    `
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            Now Playing
+          </span>
+          <span class="text-xs text-white/70">Lobby: ${lobbyCode}</span>
+        </div>
+        <div class="mt-1 text-xs text-white/50">
+          🔒 Controls disabled for fair gameplay
+        </div>
+      `
 
       // Add aesthetic corner decorations
       const cornerDecorations = document.createElement("div")
-      cornerDecorations.className = "absolute inset-0 pointer-events-none"
+      cornerDecorations.className = "absolute inset-0 pointer-events-none z-10"
       cornerDecorations.innerHTML = `
-      <div class="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30 rounded-tl-lg"></div>
-      <div class="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30 rounded-tr-lg"></div>
-      <div class="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30 rounded-bl-lg"></div>
-      <div class="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30 rounded-br-lg"></div>
-    `
+        <div class="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30 rounded-tl-lg"></div>
+        <div class="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30 rounded-tr-lg"></div>
+        <div class="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30 rounded-bl-lg"></div>
+        <div class="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30 rounded-br-lg"></div>
+      `
+
+      // Add responsive resize handler
+      const handleResize = () => {
+        constrainedContainer.style.width = getResponsiveWidth()
+      }
+      window.addEventListener("resize", handleResize)
 
       // Handle iframe load event
       iframe.onload = () => {
@@ -277,11 +311,32 @@ export default function GamePage() {
           videoFrame.style.opacity = "1"
         }, 100)
 
+        // Additional interaction blocking via JavaScript
+        setTimeout(() => {
+          try {
+            // Block keyboard events on the iframe
+            iframe.contentWindow?.document?.addEventListener("keydown", (e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              return false
+            })
+
+            // Block context menu
+            iframe.contentWindow?.document?.addEventListener("contextmenu", (e) => {
+              e.preventDefault()
+              return false
+            })
+          } catch (error) {
+            // Cross-origin restrictions prevent direct access, but the overlay will handle interactions
+            console.log("Cross-origin restrictions apply, using overlay for interaction blocking")
+          }
+        }, 1000)
+
         // Show success toast
         if (toast) {
           toast({
             title: "🎬 Video Loaded Successfully",
-            description: "The video is now playing in portrait mode",
+            description: "Video is now playing in controlled mode",
           })
         }
       }
@@ -292,28 +347,87 @@ export default function GamePage() {
 
       // Assemble the video structure
       innerContainer.appendChild(iframe)
+      innerContainer.appendChild(interactionBlocker) // Add interaction blocker on top
       videoFrame.appendChild(gradientBorder)
       videoFrame.appendChild(innerContainer)
       videoFrame.appendChild(videoInfo)
       videoFrame.appendChild(cornerDecorations)
-      videoWrapper.appendChild(videoFrame)
+      constrainedContainer.appendChild(videoFrame)
+      videoWrapper.appendChild(constrainedContainer)
       container.appendChild(videoWrapper)
+
+      // Cleanup function
+      const cleanup = () => {
+        window.removeEventListener("resize", handleResize)
+      }
+
+      // Store cleanup function for later use
+      container._cleanup = cleanup
     } else {
-      // Handle direct video URLs (mp4, webm, etc.)
+      // Handle direct video URLs with strict control
       const videoWrapper = document.createElement("div")
-      videoWrapper.className = "relative w-full h-full flex items-center justify-center"
+      videoWrapper.className = "relative w-full h-full flex items-center justify-center p-4"
+
+      const constrainedContainer = document.createElement("div")
+      constrainedContainer.style.width = getResponsiveWidth()
+      constrainedContainer.style.maxWidth = "440px"
+      constrainedContainer.style.minWidth = "280px"
+      constrainedContainer.style.height = "100%"
+      constrainedContainer.style.maxHeight = "calc(100vh - 200px)"
+      constrainedContainer.className = "relative"
 
       const videoFrame = document.createElement("div")
       videoFrame.className =
-        "relative w-full max-w-md h-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+        "relative w-full h-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
 
       const video = document.createElement("video")
       video.className = "w-full h-full object-cover rounded-xl"
       video.src = video_url
-      video.controls = true
       video.autoplay = true
-      video.muted = true // Start muted to allow autoplay
+      video.muted = true
       video.playsInline = true
+      video.loop = false
+      video.preload = "auto"
+
+      // Disable all video controls and interactions
+      video.controls = false
+      video.disablePictureInPicture = true
+      video.controlsList = "nodownload nofullscreen noremoteplayback"
+      video.style.pointerEvents = "none"
+
+      // Create interaction blocker overlay
+      const interactionBlocker = document.createElement("div")
+      interactionBlocker.className = "absolute inset-0 z-30 cursor-not-allowed"
+      interactionBlocker.style.backgroundColor = "transparent"
+      interactionBlocker.title = "Video controls are disabled during gameplay"
+
+      // Prevent all video interactions
+      const preventInteraction = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        return false
+      }
+
+      video.addEventListener("click", preventInteraction)
+      video.addEventListener("dblclick", preventInteraction)
+      video.addEventListener("contextmenu", preventInteraction)
+      video.addEventListener("keydown", preventInteraction)
+      video.addEventListener("keyup", preventInteraction)
+      video.addEventListener("keypress", preventInteraction)
+
+      // Prevent seeking and pausing
+      video.addEventListener("seeking", () => {
+        video.currentTime = video.currentTime // Reset to current time
+      })
+
+      video.addEventListener("pause", () => {
+        video.play() // Force play if paused
+      })
+
+      const handleResize = () => {
+        constrainedContainer.style.width = getResponsiveWidth()
+      }
+      window.addEventListener("resize", handleResize)
 
       video.onloadeddata = () => {
         loadingOverlay.style.opacity = "0"
@@ -326,7 +440,7 @@ export default function GamePage() {
         if (toast) {
           toast({
             title: "🎬 Video Loaded Successfully",
-            description: "The video is now playing",
+            description: "Video is now playing in controlled mode",
           })
         }
       }
@@ -336,33 +450,48 @@ export default function GamePage() {
       }
 
       videoFrame.appendChild(video)
-      videoWrapper.appendChild(videoFrame)
+      videoFrame.appendChild(interactionBlocker)
+      constrainedContainer.appendChild(videoFrame)
+      videoWrapper.appendChild(constrainedContainer)
       container.appendChild(videoWrapper)
+
+      // Cleanup function
+      const cleanup = () => {
+        window.removeEventListener("resize", handleResize)
+        video.removeEventListener("click", preventInteraction)
+        video.removeEventListener("dblclick", preventInteraction)
+        video.removeEventListener("contextmenu", preventInteraction)
+        video.removeEventListener("keydown", preventInteraction)
+        video.removeEventListener("keyup", preventInteraction)
+        video.removeEventListener("keypress", preventInteraction)
+      }
+
+      container._cleanup = cleanup
     }
 
     // Helper function to handle video errors
     function handleVideoError(errorMessage) {
       loadingOverlay.innerHTML = `
-      <div class="text-center">
-        <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <p class="text-red-400 text-lg font-medium mb-2">Video Load Error</p>
-        <p class="text-white/70 text-sm">${errorMessage}</p>
-        <button onclick="this.parentElement.parentElement.parentElement.innerHTML='<div class=\\'absolute inset-0 flex items-center justify-center\\'>
-          <div class=\\'text-center\\'>
-            <svg class=\\'w-12 h-12 mx-auto mb-4 text-gray-500\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'>
-              <path strokeLinecap=\\'round\\' strokeLinejoin=\\'round\\' strokeWidth=\\'2\\' d=\\'M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\\' />
+        <div class="text-center">
+          <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <p class=\\'text-gray-500\\'>Waiting for video...</p>
           </div>
-        </div>'" class="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors duration-200">
-          Dismiss
-        </button>
-      </div>
-    `
+          <p class="text-red-400 text-lg font-medium mb-2">Video Load Error</p>
+          <p class="text-white/70 text-sm">${errorMessage}</p>
+          <button onclick="this.parentElement.parentElement.parentElement.innerHTML='<div class=\\'absolute inset-0 flex items-center justify-center\\'>
+            <div class=\\'text-center\\'>
+              <svg class=\\'w-12 h-12 mx-auto mb-4 text-gray-500\\' fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\'>
+                <path strokeLinecap=\\'round\\' strokeLinejoin=\\'round\\' strokeWidth=\\'2\\' d=\\'M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\\' />
+              </svg>
+              <p class=\\'text-gray-500\\'>Waiting for video...</p>
+            </div>
+          </div>'" class="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors duration-200">
+            Dismiss
+          </button>
+        </div>
+      `
 
       if (toast) {
         toast({
@@ -373,6 +502,15 @@ export default function GamePage() {
       }
     }
   }
+
+  // Cleanup function for component unmount
+  useEffect(() => {
+    return () => {
+      if (videoContainerRef.current?._cleanup) {
+        videoContainerRef.current._cleanup()
+      }
+    }
+  }, [])
 
   const videoId = getYouTubeVideoId(videoUrl)
 
@@ -452,7 +590,7 @@ export default function GamePage() {
         <div className="flex-1 flex flex-col">
           <div className="bg-white rounded-xl p-4 flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold">YouTube Video</h3>
+              <h3 className="text-2xl font-bold">Game Video</h3>
 
               {/* Admin controls */}
               {role === "lobby-admin" && (
@@ -477,28 +615,7 @@ export default function GamePage() {
             </div>
 
             <div className="flex-1 relative w-full rounded-lg overflow-hidden bg-black" ref={videoContainerRef}>
-              {isLoadingVideo ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-purple-500" />
-                    <p className="text-gray-300 text-lg">Loading video...</p>
-                  </div>
-                </div>
-              ) : videoId ? (
-                <div className="relative w-full h-full flex items-center justify-center">
-                  {/* Portrait mode container with max width */}
-                  <div className="relative w-full max-w-md h-full">
-                    <iframe
-                      className="absolute inset-0 w-full h-full"
-                      src={`https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`}
-                      title="YouTube video player"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  </div>
-                </div>
-              ) : (
+              {!video_url && !videoUrl && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
                     <Play className="w-12 h-12 mx-auto mb-4 text-gray-500" />
