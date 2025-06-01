@@ -599,7 +599,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
             result = predict_emotion(face_array)
             lobbies_data[self.lobby_code]['laugh_meters'][self.username] += 0.2 if result in ['Happy',
-                                                                                              'Surprised']
+                                                                                              'Surprised'] else 0
         except Exception as e:
             await self.send_private_message("error", f"Emotion prediction failed: {e}")
             return None
