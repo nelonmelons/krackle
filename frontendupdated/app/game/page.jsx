@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
-import { Users, Crown, Loader2, RefreshCw, Play, LogOut } from "lucide-react"
+import { Users, Crown, Loader2, RefreshCw, Play, LogOut, Check, X } from "lucide-react"
 import { useWebSocket } from "@/hooks/use-websocket" 
 import { set } from "date-fns"
 
@@ -19,13 +19,13 @@ export default function GamePage() {
   const [verifiedPlayers, setVerifiedPlayers] = useState([])
   const [videoUrl, setVideoUrl] = useState("")
   const [gameProgress, setGameProgress] = useState(0)
-  const [modelsLoaded, setModelsLoaded] = useState(false);  const [faceApiLoaded, setFaceApiLoaded] = useState(false); 
-  const [meterData, setMeterData] = useState({});
+  const [modelsLoaded, setModelsLoaded] = useState(false);  const [faceApiLoaded, setFaceApiLoaded] = useState(false);   const [meterData, setMeterData] = useState({});
   const videoContainerRef = useRef(null)
   const videoElementRef = useRef(null); // Added ref for video element
   const [death_note, setDeathNote] = useState(null)
   const [deathNotifications, setDeathNotifications] = useState([]) // Track active death notifications
   const [previousDeathNote, setPreviousDeathNote] = useState([]) // Track previous deaths to detect new ones
+  const [faceDetected, setFaceDetected] = useState(false) // Track if face is currently detected
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -362,15 +362,16 @@ export default function GamePage() {
       load_video_from_url(video_url);
     }
   }, [video_url]);
-
   async function detectAndSendFace() {
 
     const currentVideoElement = videoElementRef.current;
     if (!currentVideoElement || currentVideoElement.paused || currentVideoElement.readyState < 3) {
+      setFaceDetected(false);
       return;
     }
 
     if (!window.faceapi) {
+      setFaceDetected(false);
       return;
     }
 
@@ -383,11 +384,13 @@ export default function GamePage() {
       const detections = await window.faceapi.detectAllFaces(currentVideoElement, options);
 
       if (detections.length === 0) {
+        setFaceDetected(false);
         return;
       }
 
       if (detections.length > 1) {
         // toast({ title: "Multiple faces detected", description: "Please ensure only one person is visible.", variant: "warning" });
+        setFaceDetected(false);
         return;
       }
 
@@ -395,8 +398,12 @@ export default function GamePage() {
       const box = detection.detection ? detection.detection.box : detection.box;
 
       if (!box) {
+        setFaceDetected(false);
         return;
       }
+
+      // Face detected successfully
+      setFaceDetected(true);
 
       const tempCanvas = document.createElement("canvas");
       const tempContext = tempCanvas.getContext("2d");
@@ -436,11 +443,11 @@ export default function GamePage() {
 
       
       if (sendMessage) {
-        sendMessage("upload_image", { image_data: base64Data })
-      }
+        sendMessage("upload_image", { image_data: base64Data })      }
 
     } catch (error) {
       console.error("Face crop and send error:", error);
+      setFaceDetected(false);
       // toast({
       //   title: "Face Detection Error",
       //   description: `Failed to crop and send face: ${error.message}`,
@@ -517,10 +524,31 @@ export default function GamePage() {
           KRACKLE<span className="text-yellow-300">.CO</span>
         </h1>
         <h2 className="text-white text-xl mt-1">Game: {lobbyCode}</h2>
-      </div>
-
-      {/* Death Notifications - Top Right */}
+      </div>      {/* Death Notifications - Top Right */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
+        {/* Face Detection Status Indicator */}
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg border-2 transition-all duration-300 ${
+          faceDetected 
+            ? "bg-gradient-to-r from-green-100 to-emerald-100 border-green-400 text-green-800" 
+            : "bg-gradient-to-r from-red-100 to-pink-100 border-red-400 text-red-800"
+        }`}>
+          <div className={`w-3 h-3 rounded-full ${
+            faceDetected ? "bg-green-500" : "bg-red-500"
+          } animate-pulse`}></div>
+          {faceDetected ? (
+            <>
+              <Check className="w-4 h-4" />
+              <span className="text-sm font-medium">Face Detected</span>
+            </>
+          ) : (
+            <>
+              <X className="w-4 h-4" />
+              <span className="text-sm font-medium">No Face Detected</span>
+            </>
+          )}
+        </div>
+
+        {/* Death Notifications */}
         {deathNotifications.map((notification) => (
           <div
             key={notification.id}
