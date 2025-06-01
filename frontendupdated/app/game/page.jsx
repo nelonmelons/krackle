@@ -70,22 +70,11 @@ export default function GamePage() {
         laughMeters_json = {};
       }
     } else if (typeof laughMeters === "object" && laughMeters !== null) {
-      laughMeters_json = laughMeters;
-    } else {
+      laughMeters_json = laughMeters;    } else {
       laughMeters_json = {};
     }
-    //Normalize laugh meter values to be between 0 and 1
-    for (const key in laughMeters_json) {
-      if (laughMeters_json[key] > 1) {
-        laughMeters_json[key] = 1;
-      }
-    }
     
-    console.log("Username in laugh meters:", username);
-    console.log("Current laugh meter value:", laughMeters_json[username]);
-
-    setMeterData(laughMeters_json);
-
+    // First, check for deaths (values > 1) before normalizing
     const newDeathNote = [];
     for (const [key, value] of Object.entries(laughMeters_json)) {
       if (value > 1) {
@@ -93,6 +82,17 @@ export default function GamePage() {
       }
     }
     setDeathNote(newDeathNote);
+    
+    // Normalize laugh meter values to be between 0 and 1
+    for (const key in laughMeters_json) {
+      // Clamp values between 0 and 1
+      laughMeters_json[key] = Math.max(0, Math.min(1, laughMeters_json[key]));
+    }
+    
+    console.log("Username in laugh meters:", username);
+    console.log("Current laugh meter value:", laughMeters_json[username]);
+
+    setMeterData(laughMeters_json);
 
   }, [laughMeters]);
 
@@ -616,8 +616,8 @@ export default function GamePage() {
         </div>
       </div>      <div className="fixed bottom-10 right-6 z-20">
         <div className="relative flex flex-col items-center">
-          {/* Laugh-o-meter */}
-          <div className="relative w-12 h-48 mb-6">
+          {/* Laugh-o-meter - Made taller and more prominent */}
+          <div className="relative w-16 h-80 mb-6">
             {/* Thermometer container */}
             <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 shadow-lg">
               {/* Laugh meter fill */}
@@ -627,15 +627,15 @@ export default function GamePage() {
                   style={{
                     height: `${Math.max(0, Math.min(100, meterData[username] * 100))}%`,
                     background: "linear-gradient(to top, #f59e0b, #ef4444, #dc2626)",
-                    margin: "3px",
-                    width: "calc(100% - 6px)",
-                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.5)",
+                    margin: "4px",
+                    width: "calc(100% - 8px)",
+                    boxShadow: "0 0 15px rgba(239, 68, 68, 0.6)",
                   }}
                 ></div>
               )}
               
               {/* Thermometer scale marks */}
-              <div className="absolute -left-8 top-0 h-full flex flex-col justify-between text-white text-xs font-bold">
+              <div className="absolute -left-10 top-0 h-full flex flex-col justify-between text-white text-sm font-bold">
                 <span>😂</span>
                 <span>😄</span>
                 <span>🙂</span>
@@ -644,35 +644,15 @@ export default function GamePage() {
             </div>
             
             {/* Laugh meter label and percentage */}
-            <div className="absolute -right-16 top-1/2 -translate-y-1/2">
-              <div className="bg-gradient-to-r from-pink-500/80 to-orange-500/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
-                <div className="text-white font-bold text-xs text-center">LAUGH</div>
-                <div className="text-white font-bold text-sm text-center">
+            <div className="absolute -right-20 top-1/2 -translate-y-1/2">
+              <div className="bg-gradient-to-r from-pink-500/80 to-orange-500/80 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/30">
+                <div className="text-white font-bold text-sm text-center">LAUGH</div>
+                <div className="text-white font-bold text-lg text-center">
                   {meterData && meterData[username] !== undefined 
                     ? `${Math.round(meterData[username] * 100)}%`
                     : '0%'
                   }
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Game progress meter (separate from laugh meter) */}
-          <div className="relative w-8 h-32 mb-4">
-            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
-              <div
-                className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-300 ease-out"
-                style={{
-                  height: `${gameProgress}%`,
-                  background: `linear-gradient(to top, #22c55e, #eab308, #ef4444)`,
-                  margin: "2px",
-                  width: "calc(100% - 4px)",
-                }}
-              ></div>
-            </div>
-            <div className="absolute -right-10 top-1/2 -translate-y-1/2">
-              <div className="bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1">
-                <span className="text-white font-bold text-xs">{gameProgress}%</span>
               </div>
             </div>
           </div>
