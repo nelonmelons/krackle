@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Users, Crown, Loader2, RefreshCw, Play, LogOut } from "lucide-react"
 import { useWebSocket } from "@/hooks/use-websocket" 
+import { set } from "date-fns"
 
 const API_BASE_URL = "https://cd6f-202-28-7-4.ngrok-free.app"
 
@@ -27,7 +28,29 @@ export default function GamePage() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
 
-  const { video_url, isConnected, players, connectionError, sendMessage, disconnect } = useWebSocket(
+  const {
+    isConnected,
+    messages,
+    players,
+    lobbyInfo,
+    connectionError,
+    verified_usernames,
+    game_started,
+    video_url,
+    laughMeters,
+    data,
+    sendChatMessage,
+    leaveLobby,
+    kickPlayer,
+    startGame,
+    closeLobby,
+    disbandLobby,
+    mutePlayer,
+    unmutePlayer,
+    changeSettings,
+    sendMessage,
+    disconnect,
+  } = useWebSocket(
     lobbyCode,
     username,
     userToken,
@@ -58,11 +81,9 @@ export default function GamePage() {
     const storedUsername = localStorage.getItem("krackle_username")
     const storedLobby = localStorage.getItem("krackle_lobby")
     const storedToken = localStorage.getItem("krackle_user_token")
-    const storedAdminToken = localStorage.getItem("krackle_admin_token")
     const storedRole = localStorage.getItem("krackle_role")
-    const urlLobbyCode = searchParams.get("lobby_code")
 
-    if (!storedUsername || (!storedLobby && !urlLobbyCode)) {
+    if (!storedUsername ||!storedLobby) {
       toast({
         title: "Session expired",
         description: "Please join a lobby again",
@@ -73,13 +94,13 @@ export default function GamePage() {
     }
 
     setUsername(storedUsername)
-    setLobbyCode(storedLobby || urlLobbyCode)
+    setLobbyCode(storedLobby)
 
     const websocketRole = storedRole === "admin" ? "lobby-admin" : storedRole || "player"
     setRole(websocketRole)
 
     if (storedRole === "admin") {
-      setUserToken(storedAdminToken)
+      setUserToken(storedToken)
     } else if (storedRole === "player") {
       setUserToken(storedToken)
     } else {
@@ -108,6 +129,7 @@ export default function GamePage() {
         toast({ title: "Loading Face Models", description: "Please wait..." });
         await window.faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
         setModelsLoaded(true);
+        setFaceApiLoaded(true);
         toast({ title: "Face Models Loaded", description: "Ready for face detection." });
       } catch (error) {
         console.error("Error loading face detection models:", error);
@@ -153,7 +175,7 @@ export default function GamePage() {
     setIsLoadingVideo(true)
     try {
       if (isConnected && sendMessage) {
-        sendMessage(JSON.stringify({ type: "request_video" }))
+        sendMessage("new_game_video")
       } else {
         toast({
           title: "Connection error",
@@ -344,7 +366,7 @@ export default function GamePage() {
 
       
       if (sendMessage) {
-        sendMessage("upload_image", base64Data);
+        sendMessage("upload_image", { image_data: base64Data })
       }
 
     } catch (error) {
@@ -374,7 +396,12 @@ export default function GamePage() {
 
   useEffect(() => {
     let intervalId;
-    if (isConnected && modelsLoaded && faceApiLoaded && role === "player") {
+    console.log("Setting up interval for face detection and sending image: VARABLES", {
+      isConnected,
+      modelsLoaded,
+      faceApiLoaded
+    });
+    if (isConnected && modelsLoaded && faceApiLoaded) {
       intervalId = setInterval(() => {
         triggerFaceImageSend(); // Use the renamed wrapper function
       }, 500);
@@ -384,7 +411,7 @@ export default function GamePage() {
         clearInterval(intervalId);
       }
     };
-  }, [isConnected, modelsLoaded, faceApiLoaded, role, lobbyCode, username, sendMessage]); // Added relevant dependencies
+  }, [isConnected, modelsLoaded, faceApiLoaded, lobbyCode, username, sendMessage]); // Added relevant dependencies
 
   useEffect(() => {
     return () => {

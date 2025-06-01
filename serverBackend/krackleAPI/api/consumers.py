@@ -464,6 +464,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
     async def handle_upload_image(self, payload):
         """Handle player image upload for verification"""
         image_data = payload.get('image_data')
+
         if not image_data:
             await self.send_private_message("error", "No image data provided.")
             return
@@ -474,6 +475,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             return
 
         # Save the image
+        print(f"[DEBUG] GOT IMAGE IN STATE { lobby_info.get('game_state', {}) }")
         filename = save_player_image(self.lobby_code, self.username, image_data)
         if not filename:
             await self.send_private_message("error", "Failed to save image. Please try again.")
@@ -492,7 +494,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         if game_state.get('status') == 'playing':
             await self.handle_emotion_prediction()
-            await self.send_private_message("emotion_prediction_update", lobby_info.get('laugh_meters'))
+
+            await self.send_private_message("emotion_prediction_update", json.dumps(lobby_info.get('laugh_meters')))
         else:
             await self.send_private_message("success", "Profile picture uploaded successfully!")
             # Broadcast verification update to all players
