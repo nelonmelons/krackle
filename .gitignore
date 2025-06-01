@@ -42,4 +42,4 @@ pnpm-debug.log*
 .env
 .env.*
 
-frontendTEST/
+serverBackend/krackleAPI/media/
