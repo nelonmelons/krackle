@@ -235,7 +235,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
         default:
           console.log("Unhandled lobby event:", data.event)
       }
-    } else if (data.type === 'private_message') {
+    } else if (data.type === 'private_message' && data.message_type !== 'emotion_prediction_update') {
       toast({
         title: data.message_type === 'error' ? "Error" : "Success",
         description: data.message,

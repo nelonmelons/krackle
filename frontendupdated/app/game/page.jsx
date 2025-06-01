@@ -577,6 +577,15 @@ export default function GamePage() {
                 <span className="text-white text-xs font-medium">LIVE</span>
               </div>
             </div>
+            {/* Add laugh meter bar here */}
+            <div className="absolute bottom-0 left-0 w-full h-2 bg-pink-500/20 backdrop-blur-sm">
+              {laughMeters && laughMeters[username] && (
+                <div
+                  className="h-full bg-pink-500"
+                  style={{ width: `${laughMeters[username]}%` }}
+                ></div>
+              )}
+            </div>
           </div>
         </div>
       </div>
