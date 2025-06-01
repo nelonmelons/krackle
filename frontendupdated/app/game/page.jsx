@@ -80,6 +80,7 @@ export default function GamePage() {
   useEffect(() => {
     const storedUsername = localStorage.getItem("krackle_username")
     const storedLobby = localStorage.getItem("krackle_lobby")
+    const storedAdminToken = localStorage.getItem("krackle_admin_token")
     const storedToken = localStorage.getItem("krackle_user_token")
     const storedRole = localStorage.getItem("krackle_role")
 
@@ -100,7 +101,7 @@ export default function GamePage() {
     setRole(websocketRole)
 
     if (storedRole === "admin") {
-      setUserToken(storedToken)
+      setUserToken(storedAdminToken)
     } else if (storedRole === "player") {
       setUserToken(storedToken)
     } else {

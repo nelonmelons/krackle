@@ -573,6 +573,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         face_url = get_player_image_url(self.lobby_code, self.username)  # Ensure player image URL is set)
         # Read image from face_url using OpenCV and numpy
         face = cv2.imread(face_url)
+
         if face is None:
             await self.send_private_message("error", "No face data provided for emotion prediction.")
             return
