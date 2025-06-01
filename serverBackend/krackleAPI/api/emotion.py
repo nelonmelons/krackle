@@ -25,6 +25,8 @@ model.add(Dense(1024, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(7, activation='softmax'))
 
+model.load_weights('api/model.h5')
+
 emotion_dict: dict[int, str] = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
 
 def predict_emotion(frame: np.ndarray) -> str:
@@ -37,7 +39,8 @@ def predict_emotion(frame: np.ndarray) -> str:
     :rtype: list
     """
     prediction = model.predict(frame, verbose=0)
-    index = np.argmax(prediction)
+    print("[AI] Prediction: ", prediction)
+    index = np.argmax(prediction[0])
     emotion = emotion_dict[index]
-
+    print("[AI] Emotion: ", emotion, "Confident: ", prediction[0][index])
     return emotion
