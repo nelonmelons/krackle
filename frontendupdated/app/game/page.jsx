@@ -74,8 +74,16 @@ export default function GamePage() {
     } else {
       laughMeters_json = {};
     }
+    //Normalize laugh meter values to be between 0 and 1
+    for (const key in laughMeters_json) {
+      if (laughMeters_json[key] > 1) {
+        laughMeters_json[key] = 1;
+      }
+    }
+    
     console.log("Username in laugh meters:", username);
     console.log("Current laugh meter value:", laughMeters_json[username]);
+
     setMeterData(laughMeters_json);
 
     const newDeathNote = [];
