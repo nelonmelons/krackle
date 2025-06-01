@@ -2,13 +2,13 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
 from .views.share_data import lobbies_data  # Corrected import path
-from .utils.image_utils import save_player_image, delete_lobby_images, get_player_image_url
+from .utils.image_utils import save_player_image, delete_lobby_images, get_image_numpy
 import numpy as np
 import sys
 import os
-
 from .emotion import predict_emotion
 from .shorts_links import urls
+from django.conf import settings
 import cv2
 
 
@@ -112,9 +112,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
             self.video_ind = 0
 
-            # Optionally, remove token from issued_player_tokens once used, or keep for reconnections
-            # For now, we keep it in issued_player_tokens.
-
             await self.broadcast_lobby_update("user_connected")
 
         except Exception as e:
@@ -155,6 +152,9 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         elif message_type == 'upload_image':
             await self.handle_upload_image(payload)
 
+        # Face detection data for verification
+        elif message_type == 'face_detection_data':
+            await self.handle_face_detection_data(payload)
 
         # Admin-only actions
         elif message_type in ['kick_player', 'start_game', 'close_lobby', 'disband_lobby', 'mute_player',
@@ -274,7 +274,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     async def handle_start_game(self, payload):
         """Handle admin starting the game"""
-        print(f"[LobbyConsumer] Starting game for lobby {self.lobby_code}")
+        self.play_round = 1
 
         lobby_info = lobbies_data.get(self.lobby_code)
         if not lobby_info:
@@ -284,18 +284,15 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         players = lobby_info.get('players', [])
         verified_players = lobby_info.get('verified_players', [])
 
+        # init laugh_meters
+        lobby_info['laugh_meters'] = {player: 0.0 for player in players}
+
         unverified_players = [player for player in players if player not in verified_players]
 
         if unverified_players:
-            await self.send_private_message(
-                "error",
-                f"Cannot start game. The following players haven't submitted their photos: {', '.join(unverified_players)}"
-            )
+            await self.send_private_message("error",
+                                            f"Cannot start game. The following players haven't submitted their photos: {', '.join(unverified_players)}")
             return
-
-        # Initialize laugh meters for all verified players
-        laugh_meters = {user: 0.0 for user in verified_players}
-        lobby_info['laugh_meters'] = laugh_meters
 
         # Simple implementation - just broadcast game start with verified players
         lobby_info['game_state'] = {
@@ -311,8 +308,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'event': 'game_started',
                 'message': f'The game has started with {len(verified_players)} verified players!',
                 'started_by': self.username,
-                'verified_players': verified_players,
-                'laugh_meters': laugh_meters
+                'verified_players': verified_players
             }
         )
 
@@ -503,6 +499,34 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 'verified_usernames': lobby_info['verified_players']
             })
 
+    async def handle_face_detection_admin_settings(self, payload):
+        """Handle admin face detection settings"""
+        lobby_info = lobbies_data.get(self.lobby_code)
+        if not lobby_info:
+            await self.send_private_message("error", "Lobby not found.")
+            return
+
+        # Initialize face detection settings
+        face_settings = lobby_info.setdefault('face_detection_settings', {
+            'enabled': False,
+            'required_mode': 'face',
+            'detection_frequency': 5,
+            'broadcast_to_all': False
+        })
+
+        # Update settings from payload
+        if 'enabled' in payload:
+            face_settings['enabled'] = payload['enabled']
+        if 'required_mode' in payload:
+            face_settings['required_mode'] = payload['required_mode']
+        if 'detection_frequency' in payload:
+            face_settings['detection_frequency'] = max(1, int(payload['detection_frequency']))
+        if 'broadcast_to_all' in payload:
+            face_settings['broadcast_to_all'] = payload['broadcast_to_all']
+
+        # Broadcast settings update to all players
+        await self.broadcast_lobby_update("face_detection_settings_update", face_settings)
+        await self.send_private_message("success", "Face detection settings updated!")
 
     async def send_private_message(self, message_type, message):
         """Send a private message to this user only"""
@@ -565,21 +589,14 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     async def handle_emotion_prediction(self):
         """Handle emotion prediction using face data"""
-
-        # Dynamically import predict_emotion from newBackend/emotionTest.py
-        backend_path = os.path.join(os.path.dirname(__file__), '../../newBackend')
-        sys.path.append(os.path.abspath(backend_path))
-
-        face_url = get_player_image_url(self.lobby_code, self.username)  # Ensure player image URL is set)
-        # Read image from face_url using OpenCV and numpy
-        face = cv2.imread(face_url)
-
-        if face is None:
+        face_array = get_image_numpy(self.lobby_code, self.username)
+        print("[DEBUG] Face Data Size: ", face_array.shape)
+        if face_array is None:
             await self.send_private_message("error", "No face data provided for emotion prediction.")
             return
 
         try:
-            face_array = np.array(face)
+
             result = predict_emotion(face_array)
             lobbies_data[self.lobby_code]['laugh_meters'][self.username] += 0.1 if result in ['Happy',
                                                                                               'Surprised'] else -0.005
@@ -607,5 +624,3 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         await self.broadcast_lobby_update("game_video", {"url": url})
         return None
-
-

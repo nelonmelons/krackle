@@ -8,7 +8,8 @@ from pathlib import Path
 from PIL import Image
 from io import BytesIO
 from django.conf import settings
-
+import numpy as np
+import cv2
 
 def create_lobby_image_directory(lobby_code):
     """Create a directory for storing lobby images"""
@@ -71,8 +72,20 @@ def delete_lobby_images(lobby_code):
 
 def get_player_image_url(lobby_code, username):
     """Get the URL for a player's image"""
-    filename = f"{lobby_code}_{username}.jpg"
-    return f"{settings.MEDIA_URL}lobby_images/{lobby_code}/{filename}"
+    return Path(settings.MEDIA_ROOT) / 'lobby_images' / lobby_code / f"{lobby_code}_{username}.jpg"
+
+
+def get_image_numpy(lobby_code, username) -> np.ndarray:
+    """Get the image as a numpy array that is compatible with OpenCV and the AI"""
+    # Build the file path, not the URL
+    filepath = get_player_image_url(lobby_code, username)
+    face = cv2.imread(str(filepath))
+    if face is None:
+        raise FileNotFoundError(f"Image file not found: {filepath}")
+
+    grey = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
+    cropped_img = np.expand_dims(np.expand_dims(cv2.resize(grey, (48, 48)), -1), 0)
+    return cropped_img
 
 
 def cleanup_all_lobby_images():
