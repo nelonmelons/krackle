@@ -19,12 +19,13 @@ export default function GamePage() {
   const [verifiedPlayers, setVerifiedPlayers] = useState([])
   const [videoUrl, setVideoUrl] = useState("")
   const [gameProgress, setGameProgress] = useState(0)
-  const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [faceApiLoaded, setFaceApiLoaded] = useState(false); 
+  const [modelsLoaded, setModelsLoaded] = useState(false);  const [faceApiLoaded, setFaceApiLoaded] = useState(false); 
   const [meterData, setMeterData] = useState({});
   const videoContainerRef = useRef(null)
   const videoElementRef = useRef(null); // Added ref for video element
   const [death_note, setDeathNote] = useState(null)
+  const [deathNotifications, setDeathNotifications] = useState([]) // Track active death notifications
+  const [previousDeathNote, setPreviousDeathNote] = useState([]) // Track previous deaths to detect new ones
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -58,7 +59,6 @@ export default function GamePage() {
     userToken,
     role,
   )
-
   useEffect(() => {
     console.log("Laugh meters updated in PAGE:", laughMeters);
     let laughMeters_json;
@@ -81,7 +81,28 @@ export default function GamePage() {
         newDeathNote.push(key);
       }
     }
+    
+    // Check for new deaths and create notifications
+    const newDeaths = newDeathNote.filter(player => !previousDeathNote.includes(player));
+    if (newDeaths.length > 0) {
+      const newNotifications = newDeaths.map(player => ({
+        id: Date.now() + Math.random(), // Unique ID
+        player: player,
+        timestamp: Date.now()
+      }));
+      
+      setDeathNotifications(prev => [...prev, ...newNotifications]);
+      
+      // Auto-remove notifications after 5 seconds
+      newNotifications.forEach(notification => {
+        setTimeout(() => {
+          setDeathNotifications(prev => prev.filter(notif => notif.id !== notification.id));
+        }, 5000);
+      });
+    }
+    
     setDeathNote(newDeathNote);
+    setPreviousDeathNote(newDeathNote);
     
     // Normalize laugh meter values to be between 0 and 1
     for (const key in laughMeters_json) {
@@ -94,7 +115,7 @@ export default function GamePage() {
 
     setMeterData(laughMeters_json);
 
-  }, [laughMeters]);
+  }, [laughMeters, previousDeathNote]);
 
   useEffect(() => {
     if (window.faceapi) {
@@ -491,12 +512,33 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600">
-      <div className="text-center py-4">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600">      <div className="text-center py-4">
         <h1 className="text-white text-4xl font-bold tracking-wide">
           KRACKLE<span className="text-yellow-300">.CO</span>
         </h1>
         <h2 className="text-white text-xl mt-1">Game: {lobbyCode}</h2>
+      </div>
+
+      {/* Death Notifications - Top Right */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {deathNotifications.map((notification) => (
+          <div
+            key={notification.id}
+            className="bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-4 rounded-lg shadow-2xl border-2 border-red-400 animate-in slide-in-from-right-5 duration-500"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl" role="img" aria-label="skull">💀</span>
+              <div>
+                <div className="font-bold text-lg">PLAYER ELIMINATED!</div>
+                <div className="text-red-200">
+                  {notification.player}
+                  {notification.player === username ? " (You)" : ""} 
+                  {" "}died from laughter!
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col md:flex-row flex-1 p-4 gap-4">
@@ -539,25 +581,33 @@ export default function GamePage() {
                 <p>Loading players...</p>
               </div>
             )}
-          </div>
-          {/* Death Log Section */}
+          </div>          {/* Death Log Section */}
           <div className="mt-8">
             <h3 className="text-white text-lg font-bold mb-2 flex items-center gap-2">
               <span role="img" aria-label="skull">💀</span> Death Log
+              {death_note && death_note.length > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                  {death_note.length}
+                </span>
+              )}
             </h3>
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {death_note && death_note.length > 0 ? (
                 death_note.map((deadPlayer, idx) => (
                   <div
                     key={idx}
-                    className="p-2 rounded-lg bg-gradient-to-r from-red-400/80 to-pink-400/80 text-white flex items-center gap-2"
+                    className="p-2 rounded-lg bg-gradient-to-r from-red-400/80 to-pink-400/80 text-white flex items-center gap-2 animate-in slide-in-from-left-3"
                   >
+                    <span className="text-lg" role="img" aria-label="skull">💀</span>
                     <span className="font-bold">{deadPlayer}</span>
-                    {deadPlayer === username && <span className="ml-2 text-xs bg-black/30 rounded px-2 py-0.5">(You)</span>}
+                    {deadPlayer === username && <span className="ml-2 text-xs bg-black/50 rounded px-2 py-0.5">(You)</span>}
                   </div>
                 ))
               ) : (
-                <div className="text-center text-gray-300">No deaths yet.</div>
+                <div className="text-center text-gray-300 py-4">
+                  <span className="text-2xl mb-2 block">🎮</span>
+                  <div className="text-sm">No deaths yet. Keep laughing!</div>
+                </div>
               )}
             </div>
           </div>
@@ -614,10 +664,10 @@ export default function GamePage() {
             </div>
           </div>
         </div>
-      </div>      <div className="fixed bottom-10 right-6 z-20">
+      </div>      <div className="fixed bottom-10 right-32 z-20">
         <div className="relative flex flex-col items-center">
-          {/* Laugh-o-meter - Made taller and more prominent */}
-          <div className="relative w-16 h-80 mb-6">
+          {/* Laugh-o-meter - Made thinner and shifted left */}
+          <div className="relative w-8 h-80 mb-6">
             {/* Thermometer container */}
             <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 shadow-lg">
               {/* Laugh meter fill */}
@@ -627,15 +677,15 @@ export default function GamePage() {
                   style={{
                     height: `${Math.max(0, Math.min(100, meterData[username] * 100))}%`,
                     background: "linear-gradient(to top, #f59e0b, #ef4444, #dc2626)",
-                    margin: "4px",
-                    width: "calc(100% - 8px)",
+                    margin: "2px",
+                    width: "calc(100% - 4px)",
                     boxShadow: "0 0 15px rgba(239, 68, 68, 0.6)",
                   }}
                 ></div>
               )}
               
               {/* Thermometer scale marks */}
-              <div className="absolute -left-10 top-0 h-full flex flex-col justify-between text-white text-sm font-bold">
+              <div className="absolute -left-8 top-0 h-full flex flex-col justify-between text-white text-xs font-bold">
                 <span>😂</span>
                 <span>😄</span>
                 <span>🙂</span>
@@ -644,10 +694,10 @@ export default function GamePage() {
             </div>
             
             {/* Laugh meter label and percentage */}
-            <div className="absolute -right-20 top-1/2 -translate-y-1/2">
-              <div className="bg-gradient-to-r from-pink-500/80 to-orange-500/80 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/30">
-                <div className="text-white font-bold text-sm text-center">LAUGH</div>
-                <div className="text-white font-bold text-lg text-center">
+            <div className="absolute -right-16 top-1/2 -translate-y-1/2">
+              <div className="bg-gradient-to-r from-pink-500/80 to-orange-500/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
+                <div className="text-white font-bold text-xs text-center">LAUGH</div>
+                <div className="text-white font-bold text-sm text-center">
                   {meterData && meterData[username] !== undefined 
                     ? `${Math.round(meterData[username] * 100)}%`
                     : '0%'
