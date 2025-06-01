@@ -21,8 +21,10 @@ export default function GamePage() {
   const [gameProgress, setGameProgress] = useState(0)
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceApiLoaded, setFaceApiLoaded] = useState(false); 
+  const [meterData, setMeterData] = useState({});
   const videoContainerRef = useRef(null)
   const videoElementRef = useRef(null); // Added ref for video element
+  const [death_note, setDeathNote] = useState(null)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -56,6 +58,35 @@ export default function GamePage() {
     userToken,
     role,
   )
+
+  useEffect(() => {
+    console.log("Laugh meters updated in PAGE:", laughMeters);
+    let laughMeters_json;
+    if (typeof laughMeters === "string") {
+      try {
+        laughMeters_json = JSON.parse(laughMeters);
+      } catch (e) {
+        console.error("Failed to parse laughMeters JSON:", e, laughMeters);
+        laughMeters_json = {};
+      }
+    } else if (typeof laughMeters === "object" && laughMeters !== null) {
+      laughMeters_json = laughMeters;
+    } else {
+      laughMeters_json = {};
+    }
+    console.log("Username in laugh meters:", username);
+    console.log("Current laugh meter value:", laughMeters_json[username]);
+    setMeterData(laughMeters_json);
+
+    const newDeathNote = [];
+    for (const [key, value] of Object.entries(laughMeters_json)) {
+      if (value > 1) {
+        newDeathNote.push(key);
+      }
+    }
+    setDeathNote(newDeathNote);
+
+  }, [laughMeters]);
 
   useEffect(() => {
     if (window.faceapi) {
@@ -143,6 +174,14 @@ export default function GamePage() {
     };
     loadModels();
   }, [router, searchParams, toast, faceApiLoaded, modelsLoaded]);
+
+  useEffect(() => {
+    if (game_started && video_url) {
+      setTimeout(() => {
+        load_video_from_url(video_url);
+      }, 200); // 200ms delay
+    }
+  }, [video_url, game_started])
 
   useEffect(() => {
     const initWebcam = async () => {
@@ -296,6 +335,7 @@ export default function GamePage() {
   }, [video_url]);
 
   async function detectAndSendFace() {
+
     const currentVideoElement = videoElementRef.current;
     if (!currentVideoElement || currentVideoElement.paused || currentVideoElement.readyState < 3) {
       return;
@@ -382,6 +422,7 @@ export default function GamePage() {
 
   // Renamed to avoid conflict with detectAndSendFace which is async
   function triggerFaceImageSend() { 
+    
     if (!isConnected) {
       return;
     }
@@ -491,10 +532,31 @@ export default function GamePage() {
               </div>
             )}
           </div>
+          {/* Death Log Section */}
+          <div className="mt-8">
+            <h3 className="text-white text-lg font-bold mb-2 flex items-center gap-2">
+              <span role="img" aria-label="skull">💀</span> Death Log
+            </h3>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {death_note && death_note.length > 0 ? (
+                death_note.map((deadPlayer, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2 rounded-lg bg-gradient-to-r from-red-400/80 to-pink-400/80 text-white flex items-center gap-2"
+                  >
+                    <span className="font-bold">{deadPlayer}</span>
+                    {deadPlayer === username && <span className="ml-2 text-xs bg-black/30 rounded px-2 py-0.5">(You)</span>}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-300">No deaths yet.</div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-[400px] bg-white rounded-xl p-4 h-[600px] flex flex-col">
+        <div className="flex-1 flex items-center justify-center h-full">
+          <div className="w-[400px] bg-white rounded-xl p-4 h-[600px] flex flex-col absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-bold">Game Video</h3>
               {role === "lobby-admin" && (
@@ -546,10 +608,23 @@ export default function GamePage() {
         </div>
       </div>
 
-      <div className="fixed bottom-6 right-6 z-20">
+      <div className="fixed bottom-10 right-6 z-20">
         <div className="relative flex flex-col items-center">
-          <div className="relative w-8 h-40 mb-0">
-            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30"></div>
+          <div className="relative w-8 h-40 mb-10">
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30" style={{ height: '180%' } }>
+              {meterData && meterData[username] !== undefined && (
+                <div
+                  className="absolute left-0 right-0 bottom-0 rounded-full bg-pink-500 transition-all duration-300"
+                  style={{
+                    height: `${meterData[username]}%`,
+                    // Optional: add a gradient or shadow for style
+                    background: "linear-gradient(to top, #ec4899, #fbbf24)",
+                    margin: "2px",
+                    width: "calc(100% - 4px)",
+                  }}
+                ></div>
+              )}
+            </div>
             <div
               className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-300 ease-out"
               style={{
@@ -561,7 +636,7 @@ export default function GamePage() {
             ></div>
             <div className="absolute -right-10 top-1/2 -translate-y-1/2">
               <div className="bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1">
-                <span className="text-white font-bold text-xs">{Math.round(gameProgress)}%</span>
+                <span className="text-white font-bold text-xs">{gameProgress}%</span>
               </div>
             </div>
           </div>
@@ -579,10 +654,10 @@ export default function GamePage() {
             </div>
             {/* Add laugh meter bar here */}
             <div className="absolute bottom-0 left-0 w-full h-2 bg-pink-500/20 backdrop-blur-sm">
-              {laughMeters && laughMeters[username] && (
+              {meterData && meterData[username] && (
                 <div
                   className="h-full bg-pink-500"
-                  style={{ width: `${laughMeters[username]}%` }}
+                  style={{ width: `${meterData[username]}%` }}
                 ></div>
               )}
             </div>

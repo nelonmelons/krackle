@@ -86,6 +86,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
     setData(data)
 
     if (data.type === 'lobby.message') {
+      console.log("Data Event:", data.event)
       // Handle different lobby events
       switch (data.event) {
         case 'chat_message':
@@ -138,6 +139,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           break
 
         case 'game_started':
+          setVideoUrl(data.url)
           setGameStarted(true)
           setMessages(prev => [...prev, {
             id: Date.now(),
@@ -225,11 +227,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
           })
           break
 
-        case 'emotion_prediction_update': // Added case for emotion_prediction_update
-          if (data.laugh_meters) {
-            setLaughMeters(data.laugh_meters)
-            console.log("Laugh meters updated:", data.laugh_meters)
-          }
+        case 'emotion_prediction_update':
           break
 
         default:
@@ -241,7 +239,13 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
         description: data.message,
         variant: data.message_type === 'error' ? "destructive" : "default",
       })
-    } else if (data.type === 'kicked') {
+    } else if(data.type === 'private_message' && data.message_type === 'emotion_prediction_update'){
+          console.log("Checking LAUGH METER IN SOCKET") // Added case for emotion_prediction_update
+          if (data.message) {
+            setLaughMeters(data.message)
+          }
+    }
+    else if (data.type === 'kicked') {
       toast({
         title: "Kicked from Lobby",
         description: data.message,
@@ -330,7 +334,7 @@ export function useWebSocket(lobbyCode, username, userToken, role) {
       disconnect()
     }
   }, [connect, disconnect])
-  // Return new state and functions
+  console.log("Laugh Meters from websocket:", laughMeters) // Log laughMeters for debugging
   return {
     isConnected,
     messages,
