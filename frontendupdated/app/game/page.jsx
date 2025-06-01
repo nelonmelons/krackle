@@ -606,34 +606,62 @@ export default function GamePage() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="fixed bottom-10 right-6 z-20">
+      </div>      <div className="fixed bottom-10 right-6 z-20">
         <div className="relative flex flex-col items-center">
-          <div className="relative w-8 h-40 mb-10">
-            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30" style={{ height: '180%' } }>
+          {/* Laugh-o-meter */}
+          <div className="relative w-12 h-48 mb-6">
+            {/* Thermometer container */}
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 shadow-lg">
+              {/* Laugh meter fill */}
               {meterData && meterData[username] !== undefined && (
                 <div
-                  className="absolute left-0 right-0 bottom-0 rounded-full bg-pink-500 transition-all duration-300"
+                  className="absolute left-0 right-0 bottom-0 rounded-full transition-all duration-500 ease-out"
                   style={{
-                    height: `${meterData[username]}%`,
-                    // Optional: add a gradient or shadow for style
-                    background: "linear-gradient(to top, #ec4899, #fbbf24)",
-                    margin: "2px",
-                    width: "calc(100% - 4px)",
+                    height: `${Math.max(0, Math.min(100, meterData[username] * 100))}%`,
+                    background: "linear-gradient(to top, #f59e0b, #ef4444, #dc2626)",
+                    margin: "3px",
+                    width: "calc(100% - 6px)",
+                    boxShadow: "0 0 10px rgba(239, 68, 68, 0.5)",
                   }}
                 ></div>
               )}
+              
+              {/* Thermometer scale marks */}
+              <div className="absolute -left-8 top-0 h-full flex flex-col justify-between text-white text-xs font-bold">
+                <span>😂</span>
+                <span>😄</span>
+                <span>🙂</span>
+                <span>😐</span>
+              </div>
             </div>
-            <div
-              className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-300 ease-out"
-              style={{
-                height: `${gameProgress}%`,
-                background: `linear-gradient(to top, #22c55e, #eab308, #ef4444)`,
-                margin: "2px",
-                width: "calc(100% - 4px)",
-              }}
-            ></div>
+            
+            {/* Laugh meter label and percentage */}
+            <div className="absolute -right-16 top-1/2 -translate-y-1/2">
+              <div className="bg-gradient-to-r from-pink-500/80 to-orange-500/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/30">
+                <div className="text-white font-bold text-xs text-center">LAUGH</div>
+                <div className="text-white font-bold text-sm text-center">
+                  {meterData && meterData[username] !== undefined 
+                    ? `${Math.round(meterData[username] * 100)}%`
+                    : '0%'
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Game progress meter (separate from laugh meter) */}
+          <div className="relative w-8 h-32 mb-4">
+            <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+              <div
+                className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-300 ease-out"
+                style={{
+                  height: `${gameProgress}%`,
+                  background: `linear-gradient(to top, #22c55e, #eab308, #ef4444)`,
+                  margin: "2px",
+                  width: "calc(100% - 4px)",
+                }}
+              ></div>
+            </div>
             <div className="absolute -right-10 top-1/2 -translate-y-1/2">
               <div className="bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1">
                 <span className="text-white font-bold text-xs">{gameProgress}%</span>
@@ -651,13 +679,15 @@ export default function GamePage() {
                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
                 <span className="text-white text-xs font-medium">LIVE</span>
               </div>
-            </div>
-            {/* Add laugh meter bar here */}
-            <div className="absolute bottom-0 left-0 w-full h-2 bg-pink-500/20 backdrop-blur-sm">
-              {meterData && meterData[username] && (
+            </div>            {/* Laugh meter bar at bottom of webcam */}
+            <div className="absolute bottom-0 left-0 w-full h-3 bg-black/30 backdrop-blur-sm rounded-b-full overflow-hidden">
+              {meterData && meterData[username] !== undefined && (
                 <div
-                  className="h-full bg-pink-500"
-                  style={{ width: `${meterData[username]}%` }}
+                  className="h-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-500 ease-out"
+                  style={{ 
+                    width: `${Math.max(0, Math.min(100, meterData[username] * 100))}%`,
+                    boxShadow: "0 0 8px rgba(239, 68, 68, 0.6)"
+                  }}
                 ></div>
               )}
             </div>
