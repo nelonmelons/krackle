@@ -25,7 +25,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default_secret_key')  # Use environ
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['api.hayson.me', 'cd6f-202-28-7-4.ngrok-free.app']
+ALLOWED_HOSTS = ['api.hayson.me', 'cd6f-202-28-7-4.ngrok-free.app', '96ryqgpzci27.share.zrok.io']
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
